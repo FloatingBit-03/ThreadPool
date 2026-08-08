@@ -1,0 +1,1 @@
+/usr/bin/c++ CMakeFiles/Client.dir/src/Client.cpp.o -o /mnt/d/myCode/ThreadPool/BasicVersion1/binary/Client 

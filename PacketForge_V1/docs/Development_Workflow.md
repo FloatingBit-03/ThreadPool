@@ -1,0 +1,658 @@
+# PacketForge Development Workflow
+
+## Overview
+
+This document defines the recommended coding workflow for developing PacketForge module by module.
+
+PacketForge is designed as a modular networking framework. The development process follows a bottom-up approach where lower-level components are implemented and tested before higher-level components depend on them.
+
+The main principle is:
+
+> Build small, testable modules and verify each module before moving to the next layer.
+
+This approach improves:
+
+* Code quality
+* Maintainability
+* Debugging efficiency
+* Module independence
+* Long-term scalability
+
+---
+
+# Development Philosophy
+
+PacketForge follows a **test-driven modular development approach**.
+
+Each module should follow this cycle:
+
+```text
+1. Design Interface (.hpp)
+
+          |
+          v
+
+2. Write Unit Tests
+
+          |
+          v
+
+3. Implement Source (.cpp)
+
+          |
+          v
+
+4. Run Tests
+
+          |
+          v
+
+5. Refactor and Improve
+
+          |
+          v
+
+6. Move to Next Module
+```
+
+A module is considered complete only when:
+
+* Its public interface is stable.
+* Its implementation is complete.
+* Unit tests are passing.
+* It does not introduce unnecessary dependencies.
+
+---
+
+# Module Dependency Flow
+
+PacketForge modules are developed according to their dependency relationship.
+
+```text
+                 Applications
+                      |
+                      |
+          +-----------+-----------+
+          |                       |
+       Client                  Server
+          |                       |
+          +-----------+-----------+
+                      |
+                      |
+                 Protocol
+                      |
+                      |
+                 Network
+                      |
+                      |
+                 Common
+```
+
+Development starts from the bottom layer and moves upward.
+
+---
+
+# Phase 1: Common Module
+
+Location:
+
+```text
+include/common/
+src/common/
+tests/unit/
+```
+
+The Common module provides fundamental utilities used by all other modules.
+
+It must remain independent and should not depend on networking or protocol code.
+
+---
+
+# 1. Buffer Module
+
+Files:
+
+```text
+include/common/buffer.hpp
+
+src/common/buffer.cpp
+
+tests/unit/test_buffer.cpp
+```
+
+## Responsibility
+
+The Buffer class manages raw byte storage required for packet serialization.
+
+Responsibilities:
+
+* Store binary data
+* Write primitive data types
+* Read primitive data types
+* Manage read/write positions
+
+## Testing
+
+Test cases:
+
+* Write and read integer values
+* Write and read strings
+* Buffer size management
+* Invalid read handling
+
+---
+
+# 2. Endian Module
+
+Files:
+
+```text
+include/common/endian.hpp
+
+src/common/endian.cpp
+
+tests/unit/test_endian.cpp
+```
+
+## Responsibility
+
+Handles conversion between host byte order and network byte order.
+
+## Testing
+
+Verify:
+
+* Correct byte conversion
+* Platform-independent behavior
+
+---
+
+# 3. Error Module
+
+Files:
+
+```text
+include/common/error.hpp
+
+src/common/error.cpp
+
+tests/unit/test_error.cpp
+```
+
+## Responsibility
+
+Provides consistent error reporting.
+
+## Testing
+
+Verify:
+
+* Error creation
+* Error message handling
+* Error propagation
+
+---
+
+# 4. Logger Module
+
+Files:
+
+```text
+include/common/logger.hpp
+
+src/common/logger.cpp
+
+tests/unit/test_logger.cpp
+```
+
+## Responsibility
+
+Provides centralized logging.
+
+Examples:
+
+```text
+[INFO] Server started
+[DEBUG] Packet received
+[ERROR] Connection failed
+```
+
+Testing:
+
+* Log formatting
+* Log levels
+* Output handling
+
+---
+
+# Phase 2: Network Module
+
+Location:
+
+```text
+include/network/
+
+src/network/
+
+tests/unit/
+```
+
+The Network module abstracts operating-system socket APIs.
+
+The upper layers should not directly call:
+
+Instead, they should use PacketForge socket abstractions.
+---
+# Socket Class
+
+Files:
+
+```text
+include/network/socket.hpp
+
+src/network/socket.cpp
+
+tests/unit/test_socket.cpp
+```
+
+## Responsibility
+
+Provide RAII-based socket management.
+## Design Goals
+
+* Automatic resource cleanup
+* No socket leaks
+* Simple API
+* Platform abstraction
+
+---
+
+# Phase 3: Protocol Module
+
+Location:
+
+```text
+include/protocol/
+
+src/protocol/
+
+tests/unit/
+```
+
+The Protocol module defines the PacketForge communication format.
+
+---
+
+# Packet Module
+
+Files:
+
+```text
+packet.hpp
+
+packet.cpp
+
+test_packet.cpp
+```
+
+## Responsibility
+
+Defines packet structure.
+
+Example:
+
+```text
++----------------+
+| Version        |
++----------------+
+| Opcode         |
++----------------+
+| Length         |
++----------------+
+| Payload        |
++----------------+
+```
+
+Responsibilities:
+
+* Store packet metadata
+* Store payload
+* Validate packets
+
+---
+
+# Encoder Module
+
+Converts packet objects into binary data.
+
+Flow:
+
+```text
+Packet Object
+
+       |
+
+       v
+
+Binary Data
+```
+
+Files:
+
+```text
+encoder.hpp
+
+encoder.cpp
+```
+
+Testing:
+
+* Packet serialization
+* Data correctness
+
+---
+
+# Decoder Module
+
+Converts binary data back into packet objects.
+
+Flow:
+
+```text
+Binary Data
+
+       |
+
+       v
+
+Packet Object
+```
+
+Testing:
+
+* Deserialize valid packets
+* Reject invalid packets
+
+---
+
+# Phase 4: Client Module
+
+Location:
+
+```text
+include/client/
+
+src/client/
+
+tests/
+```
+
+The Client module combines:
+
+```text
+Client
+
+ +
+Socket
+
+ +
+Protocol
+```
+
+Responsibilities:
+
+* Connect to server
+* Create packets
+* Send requests
+* Receive responses
+
+---
+
+# Phase 5: Server Module
+
+Location:
+
+```text
+include/server/
+
+src/server/
+
+tests/
+```
+
+The Server module handles:
+
+* Listening for connections
+* Accepting clients
+* Receiving packets
+* Processing requests
+* Sending responses
+
+Flow:
+
+```text
+Client
+
+   |
+
+Socket
+
+   |
+
+Decoder
+
+   |
+
+Packet Handler
+
+   |
+
+Encoder
+
+   |
+
+Response
+```
+
+---
+
+# Phase 6: Application Layer
+
+Location:
+
+```text
+apps/
+```
+
+Files:
+
+```text
+apps/client_main.cpp
+
+apps/server_main.cpp
+```
+
+Applications should contain minimal logic.
+
+Their responsibility is only:
+
+* Initialize objects
+* Configure runtime settings
+* Start execution
+
+Business logic should remain inside library modules.
+
+---
+
+# Testing Strategy
+
+PacketForge uses multiple testing levels.
+
+---
+
+# Unit Testing
+
+Location:
+
+```text
+tests/unit/
+```
+
+Purpose:
+
+Test individual modules independently.
+
+Examples:
+
+```text
+test_buffer.cpp
+
+test_packet.cpp
+
+test_encoder.cpp
+
+test_decoder.cpp
+
+test_socket.cpp
+```
+---
+
+# Integration Testing
+
+Location:
+
+```text
+tests/integration/
+```
+
+Purpose:
+
+Verify communication between multiple modules.
+
+Example:
+
+```text
+Start Server
+
+       |
+
+Connect Client
+
+       |
+
+Send Packet
+
+       |
+
+Server Processes Request
+
+       |
+
+Client Receives Response
+```
+---
+# Recommended Implementation Order
+
+Follow this exact sequence:
+
+```text
+1. Project Build System
+
+          |
+
+2. Common Module
+
+   - Buffer
+   - Endian
+   - Error
+   - Logger
+
+          |
+
+3. Network Module
+
+   - Socket abstraction
+
+          |
+
+4. Protocol Module
+
+   - Packet
+   - Encoder
+   - Decoder
+
+          |
+
+5. Client Module
+
+          |
+
+6. Server Module
+
+          |
+
+7. Applications
+
+          |
+
+8. Integration Testing
+
+          |
+
+9. Performance Optimization
+```
+---
+
+# Long-Term Improvements
+
+After the basic implementation is complete, PacketForge can be extended with:
+
+## Networking
+
+* Non-blocking sockets
+* Event-driven architecture
+* epoll support
+* Multiple client handling
+
+## Protocol
+
+* Packet versioning
+* Compression
+* Encryption
+* Authentication
+
+## Performance
+
+* Memory pools
+* Zero-copy buffers
+* Thread pool
+* Connection management
+---
+# Final Development Goal
+
+The final PacketForge architecture should provide:
+
+```text
+packetforge_client
+
+        |
+
+        |
+
+ PacketForge Protocol
+
+        |
+
+        |
+
+packetforge_server
+```
+with:
+
+* Modular architecture
+* Independently tested components
+* Reusable networking layer
+* Custom binary protocol
+* Maintainable C++ design
+
+This development workflow ensures that PacketForge grows incrementally while maintaining code quality, test coverage, and architectural clarity.

@@ -1,0 +1,4 @@
+/mnt/d/myCode/ThreadPool/BasicVersion1/build/CMakeFiles/Server.dir
+/mnt/d/myCode/ThreadPool/BasicVersion1/build/CMakeFiles/Client.dir
+/mnt/d/myCode/ThreadPool/BasicVersion1/build/CMakeFiles/edit_cache.dir
+/mnt/d/myCode/ThreadPool/BasicVersion1/build/CMakeFiles/rebuild_cache.dir
