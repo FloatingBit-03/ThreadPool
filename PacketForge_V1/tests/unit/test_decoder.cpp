@@ -15,24 +15,18 @@ TEST(
 {
 
     Packet packet;
-
-
     Encoder encoder;
 
     auto data = 
          encoder.encode(packet);
 
-
     auto decoded =
         Decoder::decode(data);
-
-
 
     EXPECT_EQ(
         decoded.magicNumber(),
         Packet::MagicNumber
     );
-
 
     EXPECT_EQ(
         decoded.version(),

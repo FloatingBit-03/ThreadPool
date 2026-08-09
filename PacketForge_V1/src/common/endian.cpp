@@ -5,22 +5,25 @@
 namespace packetforge::common
 {
 
-Endianness Endian::hostEndianness() noexcept
+Endianness
+Endian::hostEndianness() noexcept
 {
     return (std::endian::native == std::endian::little)
                ? Endianness::Little
                : Endianness::Big;
 }
 
-
-std::uint16_t Endian::swap16(std::uint16_t value) noexcept
+std::uint16_t
+Endian::swap16(
+    std::uint16_t value) noexcept
 {
     return (value >> 8) |
            (value << 8);
 }
 
-
-std::uint32_t Endian::swap32(std::uint32_t value) noexcept
+std::uint32_t
+Endian::swap32(
+    std::uint32_t value) noexcept
 {
     return ((value & 0x000000FFu) << 24) |
            ((value & 0x0000FF00u) << 8)  |
@@ -28,8 +31,9 @@ std::uint32_t Endian::swap32(std::uint32_t value) noexcept
            ((value & 0xFF000000u) >> 24);
 }
 
-
-std::uint64_t Endian::swap64(std::uint64_t value) noexcept
+std::uint64_t
+Endian::swap64(
+    std::uint64_t value) noexcept
 {
     return ((value & 0x00000000000000FFULL) << 56) |
            ((value & 0x000000000000FF00ULL) << 40) |
@@ -41,8 +45,9 @@ std::uint64_t Endian::swap64(std::uint64_t value) noexcept
            ((value & 0xFF00000000000000ULL) >> 56);
 }
 
-
-std::uint16_t Endian::hostToNetwork(std::uint16_t value) noexcept
+std::uint16_t
+Endian::hostToNetwork(
+    std::uint16_t value) noexcept
 {
     if (hostEndianness() == Endianness::Little)
     {
@@ -52,8 +57,9 @@ std::uint16_t Endian::hostToNetwork(std::uint16_t value) noexcept
     return value;
 }
 
-
-std::uint32_t Endian::hostToNetwork(std::uint32_t value) noexcept
+std::uint32_t
+Endian::hostToNetwork(
+    std::uint32_t value) noexcept
 {
     if (hostEndianness() == Endianness::Little)
     {
@@ -63,8 +69,9 @@ std::uint32_t Endian::hostToNetwork(std::uint32_t value) noexcept
     return value;
 }
 
-
-std::uint64_t Endian::hostToNetwork(std::uint64_t value) noexcept
+std::uint64_t
+Endian::hostToNetwork(
+    std::uint64_t value) noexcept
 {
     if (hostEndianness() == Endianness::Little)
     {
@@ -74,22 +81,26 @@ std::uint64_t Endian::hostToNetwork(std::uint64_t value) noexcept
     return value;
 }
 
-
-std::uint16_t Endian::networkToHost(std::uint16_t value) noexcept
+std::uint16_t
+Endian::networkToHost(
+    std::uint16_t value) noexcept
 {
     return hostToNetwork(value);
 }
 
-
-std::uint32_t Endian::networkToHost(std::uint32_t value) noexcept
+std::uint32_t
+Endian::networkToHost(
+    std::uint32_t value) noexcept
 {
     return hostToNetwork(value);
 }
 
-
-std::uint64_t Endian::networkToHost(std::uint64_t value) noexcept
+std::uint64_t
+Endian::networkToHost(
+    std::uint64_t value) noexcept
 {
     return hostToNetwork(value);
 }
 
-}
+} // namespace packetforge::common
+

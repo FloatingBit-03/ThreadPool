@@ -1,18 +1,86 @@
 #include "protocol/decoder.hpp"
 
-#include <stdexcept>
+#include "common/endian.hpp"
 
+#include <cstring>
+#include <stdexcept>
+#include <cstdint>
+#include <vector>
 
 namespace packetforge::protocol
 {
 
-
-Packet Decoder::decode(
-    const std::vector<std::uint8_t>& data
-)
+namespace
 {
 
-    if(data.size() < Packet::HEADER_SIZE)
+std::uint16_t readNetworkUint16(
+    const std::vector<std::uint8_t>& data,
+    std::size_t offset)
+{
+    if (offset + sizeof(std::uint16_t) > data.size())
+    {
+        throw std::runtime_error(
+            "Insufficient data for uint16"
+        );
+    }
+
+    std::uint16_t value{};
+
+    std::memcpy(
+        &value,
+        data.data() + offset,
+        sizeof(value)
+    );
+
+    return packetforge::common::Endian::networkToHost(value);
+}
+
+
+std::uint32_t readNetworkUint32(
+    const std::vector<std::uint8_t>& data,
+    std::size_t offset)
+{
+    if (offset + sizeof(std::uint32_t) > data.size())
+    {
+        throw std::runtime_error(
+            "Insufficient data for uint32"
+        );
+    }
+
+    std::uint32_t value{};
+
+    std::memcpy(
+        &value,
+        data.data() + offset,
+        sizeof(value)
+    );
+
+    return packetforge::common::Endian::networkToHost(value);
+}
+
+} // anonymous namespace
+
+
+Packet
+Decoder::decode(
+    const std::vector<std::uint8_t>& data)
+{
+    /*
+     * Packet header layout:
+     *
+     * Offset  Size    Field
+     * -------------------------
+     * 0       4       Magic Number
+     * 4       1       Version
+     * 5       1       Flags
+     * 6       2       Opcode
+     * 8       4       Sequence ID
+     * 12      4       Payload Length
+     *
+     * Total header = 16 bytes
+     */
+
+    if (data.size() < Packet::HEADER_SIZE)
     {
         throw std::runtime_error(
             "Invalid packet size"
@@ -20,14 +88,25 @@ Packet Decoder::decode(
     }
 
 
+    /*
+     * Create a Packet object.
+     *
+     * The decoded fields will be stored
+     * inside this Packet object.
+     */
+
     Packet packet;
 
 
-    auto magic =
-        readUint32(data,0);
+    /*
+     * Decode magic number.
+     */
+
+    const std::uint32_t magic =
+        readNetworkUint32(data, 0);
 
 
-    if(magic != Packet::MagicNumber)
+    if (magic != Packet::MagicNumber)
     {
         throw std::runtime_error(
             "Invalid magic number"
@@ -35,36 +114,61 @@ Packet Decoder::decode(
     }
 
 
+    /*
+     * Decode version.
+     */
 
     packet.setVersion(
         data[4]
     );
 
 
+    /*
+     * Decode flags.
+     */
+
     packet.setFlags(
         data[5]
     );
 
 
+    /*
+     * Decode opcode.
+     */
 
     packet.setOpcode(
-        readUint16(data,6)
+        readNetworkUint16(data, 6)
     );
 
 
+    /*
+     * Decode sequence ID.
+     */
 
     packet.setSequenceId(
-        readUint32(data,8)
+        readNetworkUint32(data, 8)
     );
 
 
+    /*
+     * Decode payload length.
+     */
 
-    auto length =
-        readUint32(data,12);
+    const std::uint32_t payloadLength =
+        readNetworkUint32(data, 12);
 
 
+    /*
+     * Validate that the actual packet size
+     * matches:
+     *
+     *     HEADER_SIZE + payloadLength
+     */
 
-    if(data.size() != Packet::HEADER_SIZE + length)
+    if (
+        data.size() !=
+        Packet::HEADER_SIZE + payloadLength
+    )
     {
         throw std::runtime_error(
             "Payload size mismatch"
@@ -72,55 +176,30 @@ Packet Decoder::decode(
     }
 
 
+    /*
+     * Extract payload.
+     */
 
-    std::vector<uint8_t> payload;
-
-
-    payload.insert(
-        payload.end(),
-        data.begin()+16,
+    std::vector<std::uint8_t> payload(
+        data.begin() + Packet::HEADER_SIZE,
         data.end()
     );
 
 
-    packet.setPayload(payload);
+    /*
+     * Store decoded payload inside Packet.
+     */
+
+    packet.setPayload(
+        payload
+    );
 
 
+    /*
+     * Return the completely decoded Packet.
+     */
 
     return packet;
 }
 
-
-
-
-std::uint32_t Decoder::readUint32(
-    const std::vector<uint8_t>& data,
-    std::size_t offset
-)
-{
-
-    return
-        (static_cast<uint32_t>(data[offset]) << 24) |
-        (static_cast<uint32_t>(data[offset+1]) << 16) |
-        (static_cast<uint32_t>(data[offset+2]) << 8) |
-        static_cast<uint32_t>(data[offset+3]);
-
-}
-
-
-
-
-std::uint16_t Decoder::readUint16(
-    const std::vector<uint8_t>& data,
-    std::size_t offset
-)
-{
-
-    return
-        (static_cast<uint16_t>(data[offset]) << 8) |
-        static_cast<uint16_t>(data[offset+1]);
-
-}
-
-
-}
+} // namespace packetforge::protocol

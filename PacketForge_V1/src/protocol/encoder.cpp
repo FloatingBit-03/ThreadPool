@@ -1,6 +1,6 @@
 #include "protocol/encoder.hpp"
 
-#include <cstring>
+#include "common/endian.hpp"
 
 namespace packetforge::protocol
 {
@@ -9,12 +9,17 @@ namespace
 {
 
 template<typename T>
-void appendValue(std::vector<std::uint8_t>& buffer, T value)
+void appendValue(
+    std::vector<std::uint8_t>& buffer,
+    T value)
 {
     const auto* bytes =
         reinterpret_cast<const std::uint8_t*>(&value);
 
-    buffer.insert(buffer.end(), bytes, bytes + sizeof(T));
+    buffer.insert(
+        buffer.end(),
+        bytes,
+        bytes + sizeof(T));
 }
 
 }
@@ -28,19 +33,34 @@ Encoder::encode(const Packet& packet) const
         Packet::HEADER_SIZE +
         packet.payloadLength());
 
-    appendValue(buffer, packet.magicNumber());
+    appendValue(
+        buffer,
+        common::Endian::hostToNetwork(
+            packet.magicNumber()));
 
-    appendValue(buffer, packet.version());
+    buffer.push_back(
+        packet.version());
 
-    appendValue(buffer, packet.flags());
+    buffer.push_back(
+        packet.flags());
 
-    appendValue(buffer, packet.opcode());
+    appendValue(
+        buffer,
+        common::Endian::hostToNetwork(
+            packet.opcode()));
 
-    appendValue(buffer, packet.sequenceId());
+    appendValue(
+        buffer,
+        common::Endian::hostToNetwork(
+            packet.sequenceId()));
 
-    appendValue(buffer, packet.payloadLength());
+    appendValue(
+        buffer,
+        common::Endian::hostToNetwork(
+            packet.payloadLength()));
 
-    const auto& payload = packet.payload();
+    const auto& payload =
+        packet.payload();
 
     buffer.insert(
         buffer.end(),

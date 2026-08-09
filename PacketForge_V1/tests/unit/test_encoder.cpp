@@ -2,6 +2,7 @@
 #include <cstring>
 
 #include "protocol/encoder.hpp"
+#include "common/endian.hpp"
 
 using namespace packetforge::protocol;
 
@@ -53,6 +54,8 @@ TEST_F(EncoderTest, HeaderContainsMagicNumber)
         bytes.data(),
         sizeof(magic));
 
+    magic = packetforge::common::Endian::networkToHost(magic);
+        
     EXPECT_EQ(
         magic,
         Packet::MagicNumber);

@@ -11,9 +11,12 @@ CXXFLAGS := \
 -Wall \
 -Wextra \
 -Wpedantic \
+-g \
+-O0 \
 -Iinclude \
--MMD  \
--MP   
+-MMD \
+-MP
+
 
 GTEST_LIBS := \
 -lgtest \
@@ -381,6 +384,7 @@ $(TEST_PACKET_OBJ)
 $(TEST_ENCODER_BIN): \
 $(BUILD_DIR)/protocol/packet.o \
 $(BUILD_DIR)/protocol/encoder.o \
+$(BUILD_DIR)/common/endian.o \
 $(TEST_ENCODER_OBJ)
 
 	mkdir -p $(dir $@)
@@ -400,6 +404,7 @@ $(TEST_DECODER_BIN): \
 $(BUILD_DIR)/protocol/packet.o \
 $(BUILD_DIR)/protocol/encoder.o \
 $(BUILD_DIR)/protocol/decoder.o \
+$(BUILD_DIR)/common/endian.o \
 $(TEST_DECODER_OBJ)
 
 	mkdir -p $(dir $@)
