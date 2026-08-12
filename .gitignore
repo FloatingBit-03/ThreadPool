@@ -1,0 +1,86 @@
+cat > .gitignore <<'EOF'
+# ==============================
+# C/C++ Build Artifacts
+# ==============================
+
+# Build directories
+build/
+Build/
+cmake-build-*/
+
+# Compiled object files
+*.o
+*.obj
+
+# Dependency files
+*.d
+
+# Precompiled headers
+*.gch
+*.pch
+
+# Static libraries
+*.a
+*.lib
+
+# Shared libraries
+*.so
+*.so.*
+*.dll
+*.dylib
+
+# Executables
+*.exe
+*.out
+
+# ==============================
+# CMake
+# ==============================
+
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+install_manifest.txt
+Makefile
+compile_commands.json
+
+# ==============================
+# Test / Coverage Output
+# ==============================
+
+*.gcda
+*.gcno
+*.gcov
+coverage/
+Testing/
+
+# ==============================
+# IDE / Editor
+# ==============================
+
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/c_cpp_properties.json
+
+.idea/
+*.swp
+*.swo
+
+# ==============================
+# OS Files
+# ==============================
+
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# ==============================
+# Logs / Temporary Files
+# ==============================
+
+*.log
+*.tmp
+*.temp
+EOF
