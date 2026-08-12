@@ -1,5 +1,6 @@
 #include "common/error.hpp"
 
+#include <utility>
 
 namespace packetforge::common
 {

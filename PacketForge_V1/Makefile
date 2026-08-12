@@ -23,16 +23,6 @@ GTEST_LIBS := \
 -lgtest_main \
 -pthread
 
-
-# ==========================================================
-# Dependency Files
-# ==========================================================
-
-DEPS := $(shell find $(BUILD_DIR) -name "*.d")   
-
--include $(DEPS)      
-
-
 # ==========================================================
 # Directories
 # ==========================================================
@@ -42,6 +32,15 @@ TEST_DIR := tests
 BUILD_DIR := build
 BIN_DIR := bin
 
+
+
+# ==========================================================
+# Dependency Files
+# ==========================================================
+
+DEPS := $(shell find $(BUILD_DIR) -name "*.d")   
+
+-include $(DEPS)      
 
 
 # ==========================================================
@@ -65,6 +64,9 @@ PROTOCOL_OBJ := \
 $(BUILD_DIR)/protocol/packet.o \
 $(BUILD_DIR)/protocol/encoder.o \
 $(BUILD_DIR)/protocol/decoder.o
+
+CLIENT_OBJ := \
+$(BUILD_DIR)/client/client.o
 
 
 # ==========================================================
@@ -110,6 +112,9 @@ $(BUILD_DIR)/tests/test_encoder.o
 TEST_DECODER_OBJ := \
 $(BUILD_DIR)/tests/test_decoder.o
 
+TEST_CLIENT_OBJ := \
+$(BUILD_DIR)/tests/test_client.o
+
 
 # ==========================================================
 # Test Executables
@@ -154,6 +159,9 @@ $(BUILD_DIR)/tests/test_encoder
 TEST_DECODER_BIN := \
 $(BUILD_DIR)/tests/test_decoder
 
+
+TEST_CLIENT_BIN := \
+$(BUILD_DIR)/tests/test_client
 
 # ==========================================================
 # Phony Targets
@@ -221,6 +229,21 @@ $(BUILD_DIR)/protocol/%.o: $(SRC_DIR)/protocol/%.cpp
 	$(CXXFLAGS) \
 	-c $< \
 	-o $@
+
+
+# ==========================================================
+# Compile Client Sources
+# ==========================================================
+
+$(BUILD_DIR)/client/%.o: $(SRC_DIR)/client/%.cpp
+
+	mkdir -p $(dir $@)
+
+	$(CXX) \
+	$(CXXFLAGS) \
+	-c $< \
+	-o $@
+
 
 
 # ==========================================================
@@ -414,6 +437,33 @@ $(TEST_DECODER_OBJ)
 	$(GTEST_LIBS) \
 	-o $@
 
+
+
+# ==========================================================
+# Link Client Test
+# ==========================================================
+
+$(TEST_CLIENT_BIN): \
+    $(BUILD_DIR)/client/client.o \
+    $(BUILD_DIR)/network/socket.o \
+    $(BUILD_DIR)/network/connection.o \
+    $(BUILD_DIR)/network/transport.o \
+    $(BUILD_DIR)/protocol/packet.o \
+    $(BUILD_DIR)/protocol/encoder.o \
+    $(BUILD_DIR)/protocol/decoder.o \
+    $(BUILD_DIR)/common/endian.o \
+    $(BUILD_DIR)/common/error.o \
+    $(TEST_CLIENT_OBJ)
+
+	mkdir -p $(dir $@)
+
+	$(CXX) \
+	    $^ \
+	    $(GTEST_LIBS) \
+	    -o $@
+
+
+
 # ==========================================================
 # Run All Unit Tests
 # ==========================================================
@@ -428,7 +478,8 @@ $(TEST_CONNECTION_BIN) \
 $(TEST_TRANSPORT_BIN) \
 $(TEST_PACKET_BIN) \
 $(TEST_ENCODER_BIN) \
-$(TEST_DECODER_BIN)
+$(TEST_DECODER_BIN) \
+$(TEST_CLIENT_BIN)
 
 
 	@echo
@@ -456,6 +507,8 @@ $(TEST_DECODER_BIN)
 	./$(TEST_ENCODER_BIN)
 
 	./$(TEST_DECODER_BIN)
+
+	./$(TEST_CLIENT_BIN)
 
 
 # ==========================================================

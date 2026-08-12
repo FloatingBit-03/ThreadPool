@@ -1,12 +1,14 @@
 #include "protocol/packet.hpp"
 
+#include <limits>
+
 namespace packetforge::protocol
 {
 
 Packet::Packet()
     :
     magic_(Packet::MagicNumber),
-    version_(1),
+    version_(Packet::VERSION),
     flags_(0),
     opcode_(0),
     sequenceId_(0),
@@ -72,11 +74,11 @@ Packet::sequenceId() const noexcept
     return sequenceId_;
 }
 
-std::uint32_t Packet::payloadLength() const noexcept
+std::uint32_t
+Packet::payloadLength() const noexcept
 {
     return static_cast<std::uint32_t>(payload_.size());
 }
-
 
 void
 Packet::setPayload(
@@ -85,18 +87,34 @@ Packet::setPayload(
     payload_ = payload;
 }
 
-
 const std::vector<std::uint8_t>&
 Packet::payload() const noexcept
 {
     return payload_;
 }
 
-
 bool
 Packet::isValid() const noexcept
 {
-    return magic_ == MagicNumber;
+    if (magic_ != MagicNumber)
+    {
+        return false;
+    }
+
+    if (version_ != VERSION)
+    {
+        return false;
+    }
+
+    if (
+        payload_.size() >
+        std::numeric_limits<std::uint32_t>::max()
+    )
+    {
+        return false;
+    }
+
+    return true;
 }
 
-}
+} // namespace packetforge::protocol

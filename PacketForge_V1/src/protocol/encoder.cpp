@@ -2,6 +2,8 @@
 
 #include "common/endian.hpp"
 
+#include <stdexcept>
+
 namespace packetforge::protocol
 {
 
@@ -27,6 +29,13 @@ void appendValue(
 std::vector<std::uint8_t>
 Encoder::encode(const Packet& packet) const
 {
+    if (!packet.isValid())
+    {
+        throw std::invalid_argument(
+            "Cannot encode invalid packet"
+        );
+    }
+
     std::vector<std::uint8_t> buffer;
 
     buffer.reserve(
@@ -70,4 +79,4 @@ Encoder::encode(const Packet& packet) const
     return buffer;
 }
 
-}
+} // namespace packetforge::protocol

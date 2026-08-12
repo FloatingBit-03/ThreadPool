@@ -17,7 +17,9 @@ std::uint16_t readNetworkUint16(
     const std::vector<std::uint8_t>& data,
     std::size_t offset)
 {
-    if (offset + sizeof(std::uint16_t) > data.size())
+    if (
+        offset + sizeof(std::uint16_t) >
+        data.size())
     {
         throw std::runtime_error(
             "Insufficient data for uint16"
@@ -32,15 +34,16 @@ std::uint16_t readNetworkUint16(
         sizeof(value)
     );
 
-    return packetforge::common::Endian::networkToHost(value);
+    return common::Endian::networkToHost(value);
 }
-
 
 std::uint32_t readNetworkUint32(
     const std::vector<std::uint8_t>& data,
     std::size_t offset)
 {
-    if (offset + sizeof(std::uint32_t) > data.size())
+    if (
+        offset + sizeof(std::uint32_t) >
+        data.size())
     {
         throw std::runtime_error(
             "Insufficient data for uint32"
@@ -55,11 +58,10 @@ std::uint32_t readNetworkUint32(
         sizeof(value)
     );
 
-    return packetforge::common::Endian::networkToHost(value);
+    return common::Endian::networkToHost(value);
 }
 
 } // anonymous namespace
-
 
 Packet
 Decoder::decode(
@@ -68,14 +70,14 @@ Decoder::decode(
     /*
      * Packet header layout:
      *
-     * Offset  Size    Field
+     * Offset  Size   Field
      * -------------------------
-     * 0       4       Magic Number
-     * 4       1       Version
-     * 5       1       Flags
-     * 6       2       Opcode
-     * 8       4       Sequence ID
-     * 12      4       Payload Length
+     * 0       4      Magic Number
+     * 4       1      Version
+     * 5       1      Flags
+     * 6       2      Opcode
+     * 8       4      Sequence ID
+     * 12      4      Payload Length
      *
      * Total header = 16 bytes
      */
@@ -87,24 +89,12 @@ Decoder::decode(
         );
     }
 
-
-    /*
-     * Create a Packet object.
-     *
-     * The decoded fields will be stored
-     * inside this Packet object.
-     */
-
-    Packet packet;
-
-
     /*
      * Decode magic number.
      */
 
     const std::uint32_t magic =
         readNetworkUint32(data, 0);
-
 
     if (magic != Packet::MagicNumber)
     {
@@ -113,24 +103,33 @@ Decoder::decode(
         );
     }
 
-
     /*
-     * Decode version.
+     * Decode and validate version.
      */
 
-    packet.setVersion(
-        data[4]
-    );
+    const std::uint8_t version = data[4];
 
+    if (version != Packet::VERSION)
+    {
+        throw std::runtime_error(
+            "Unsupported protocol version"
+        );
+    }
+
+    /*
+     * Create Packet after validating
+     * the fixed protocol identifiers.
+     */
+
+    Packet packet;
+
+    packet.setVersion(version);
 
     /*
      * Decode flags.
      */
 
-    packet.setFlags(
-        data[5]
-    );
-
+    packet.setFlags(data[5]);
 
     /*
      * Decode opcode.
@@ -140,7 +139,6 @@ Decoder::decode(
         readNetworkUint16(data, 6)
     );
 
-
     /*
      * Decode sequence ID.
      */
@@ -149,7 +147,6 @@ Decoder::decode(
         readNetworkUint32(data, 8)
     );
 
-
     /*
      * Decode payload length.
      */
@@ -157,24 +154,18 @@ Decoder::decode(
     const std::uint32_t payloadLength =
         readNetworkUint32(data, 12);
 
-
     /*
-     * Validate that the actual packet size
-     * matches:
-     *
-     *     HEADER_SIZE + payloadLength
+     * Validate actual packet size.
      */
 
     if (
         data.size() !=
-        Packet::HEADER_SIZE + payloadLength
-    )
+        Packet::HEADER_SIZE + payloadLength)
     {
         throw std::runtime_error(
             "Payload size mismatch"
         );
     }
-
 
     /*
      * Extract payload.
@@ -185,19 +176,18 @@ Decoder::decode(
         data.end()
     );
 
+    packet.setPayload(payload);
 
     /*
-     * Store decoded payload inside Packet.
+     * Final validation.
      */
 
-    packet.setPayload(
-        payload
-    );
-
-
-    /*
-     * Return the completely decoded Packet.
-     */
+    if (!packet.isValid())
+    {
+        throw std::runtime_error(
+            "Decoded packet is invalid"
+        );
+    }
 
     return packet;
 }

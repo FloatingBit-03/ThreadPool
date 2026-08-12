@@ -1,7 +1,9 @@
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
 #include <vector>
+
 
 namespace packetforge::protocol
 {
@@ -13,8 +15,9 @@ public:
     static constexpr std::size_t HEADER_SIZE = 16;
 
     static constexpr std::uint32_t MagicNumber = 0x50464B54;
-    // "PFKT"
 
+    static constexpr std::uint8_t VERSION = 1;
+    
     Packet();
 
     // Magic Number
