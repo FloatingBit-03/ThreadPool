@@ -144,6 +144,41 @@ Connection::connect(
 }
 
 
+common::Error
+Connection::accept(
+    Socket& listeningSocket)
+{
+    if (!listeningSocket.isOpen())
+    {
+        return common::Error(
+            common::ErrorCode::SocketError,
+            "Listening socket is not open"
+        );
+    }
+
+    if (connected_)
+    {
+        return common::Error(
+            common::ErrorCode::ConnectionFailed,
+            "Connection is already established"
+        );
+    }
+
+    auto error =
+        listeningSocket.accept(socket_);
+
+    if (!error.ok())
+    {
+        return error;
+    }
+
+    connected_ = true;
+
+    return common::Error(
+        common::ErrorCode::Success,
+        ""
+    );
+}
 
 void
 Connection::disconnect() noexcept

@@ -10,68 +10,41 @@
 namespace packetforge::network
 {
 
-
 class Connection
 {
 public:
 
-    // Construction & Destruction
-
     Connection();
-
     ~Connection();
 
-
-    // Non-copyable
-
     Connection(const Connection&) = delete;
-
     Connection& operator=(const Connection&) = delete;
 
-
-    // Movable
-
     Connection(Connection&& other) noexcept;
-
     Connection& operator=(Connection&& other) noexcept;
 
-
-
-    // Connection Management
-
+    // Client-side
     common::Error open();
-
 
     common::Error connect(
         const std::string& address,
         std::uint16_t port);
 
-
+    // Server-side
+    common::Error accept(
+        Socket& listeningSocket);
 
     void disconnect() noexcept;
 
-
-
-    // State Inspection
-
     bool isConnected() const noexcept;
 
-
-
-    // Socket Access
-
     Socket& socket() noexcept;
-
     const Socket& socket() const noexcept;
-
-
 
 private:
 
     Socket socket_;
-
     bool connected_;
-
 };
 
 

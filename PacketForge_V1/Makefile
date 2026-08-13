@@ -68,6 +68,9 @@ $(BUILD_DIR)/protocol/decoder.o
 CLIENT_OBJ := \
 $(BUILD_DIR)/client/client.o
 
+SERVER_OBJ := \
+$(BUILD_DIR)/server/server.o
+
 
 # ==========================================================
 # Test Object Files
@@ -114,6 +117,9 @@ $(BUILD_DIR)/tests/test_decoder.o
 
 TEST_CLIENT_OBJ := \
 $(BUILD_DIR)/tests/test_client.o
+
+TEST_SERVER_OBJ := \
+$(BUILD_DIR)/tests/test_server.o
 
 
 # ==========================================================
@@ -162,6 +168,11 @@ $(BUILD_DIR)/tests/test_decoder
 
 TEST_CLIENT_BIN := \
 $(BUILD_DIR)/tests/test_client
+
+
+TEST_SERVER_BIN := \
+$(BUILD_DIR)/tests/test_server
+
 
 # ==========================================================
 # Phony Targets
@@ -244,6 +255,19 @@ $(BUILD_DIR)/client/%.o: $(SRC_DIR)/client/%.cpp
 	-c $< \
 	-o $@
 
+
+# ==========================================================
+# Compile Server Sources
+# ==========================================================
+
+$(BUILD_DIR)/server/%.o: $(SRC_DIR)/server/%.cpp
+
+	mkdir -p $(dir $@)
+
+	$(CXX) \
+	$(CXXFLAGS) \
+	-c $< \
+	-o $@
 
 
 # ==========================================================
@@ -465,6 +489,25 @@ $(TEST_CLIENT_BIN): \
 
 
 # ==========================================================
+# Link Server Test
+# ==========================================================
+
+$(TEST_SERVER_BIN): \
+    $(SERVER_OBJ) \
+    $(BUILD_DIR)/network/socket.o \
+    $(BUILD_DIR)/network/connection.o \
+    $(BUILD_DIR)/common/error.o \
+    $(TEST_SERVER_OBJ)
+
+	mkdir -p $(dir $@)
+
+	$(CXX) \
+	    $^ \
+	    $(GTEST_LIBS) \
+	    -o $@
+
+
+# ==========================================================
 # Run All Unit Tests
 # ==========================================================
 
@@ -479,7 +522,8 @@ $(TEST_TRANSPORT_BIN) \
 $(TEST_PACKET_BIN) \
 $(TEST_ENCODER_BIN) \
 $(TEST_DECODER_BIN) \
-$(TEST_CLIENT_BIN)
+$(TEST_CLIENT_BIN) \
+$(TEST_SERVER_BIN)
 
 
 	@echo
@@ -509,6 +553,8 @@ $(TEST_CLIENT_BIN)
 	./$(TEST_DECODER_BIN)
 
 	./$(TEST_CLIENT_BIN)
+
+	./$(TEST_SERVER_BIN)
 
 
 # ==========================================================
