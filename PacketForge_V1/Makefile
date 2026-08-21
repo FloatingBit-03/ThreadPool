@@ -2,26 +2,24 @@
 # PacketForge Build System
 # ==========================================================
 
-
 CXX := g++
 
-
 CXXFLAGS := \
--std=c++20 \
--Wall \
--Wextra \
--Wpedantic \
--g \
--O0 \
--Iinclude \
--MMD \
--MP
-
+	-std=c++20 \
+	-Wall \
+	-Wextra \
+	-Wpedantic \
+	-g \
+	-O0 \
+	-Iinclude \
+	-MMD \
+	-MP
 
 GTEST_LIBS := \
--lgtest \
--lgtest_main \
--pthread
+	-lgtest \
+	-lgtest_main \
+	-pthread
+
 
 # ==========================================================
 # Directories
@@ -33,14 +31,13 @@ BUILD_DIR := build
 BIN_DIR := bin
 
 
-
 # ==========================================================
 # Dependency Files
 # ==========================================================
 
-DEPS := $(shell find $(BUILD_DIR) -name "*.d")   
+DEPS := $(shell find $(BUILD_DIR) -name "*.d" 2>/dev/null)
 
--include $(DEPS)      
+-include $(DEPS)
 
 
 # ==========================================================
@@ -48,28 +45,61 @@ DEPS := $(shell find $(BUILD_DIR) -name "*.d")
 # ==========================================================
 
 COMMON_OBJ := \
-$(BUILD_DIR)/common/error.o \
-$(BUILD_DIR)/common/logger.o \
-$(BUILD_DIR)/common/buffer.o \
-$(BUILD_DIR)/common/endian.o
+	$(BUILD_DIR)/common/error.o \
+	$(BUILD_DIR)/common/logger.o \
+	$(BUILD_DIR)/common/buffer.o \
+	$(BUILD_DIR)/common/endian.o
 
 
 NETWORK_OBJ := \
-$(BUILD_DIR)/network/socket.o \
-$(BUILD_DIR)/network/connection.o \
-$(BUILD_DIR)/network/transport.o
+	$(BUILD_DIR)/network/socket.o \
+	$(BUILD_DIR)/network/connection.o \
+	$(BUILD_DIR)/network/transport.o
 
 
 PROTOCOL_OBJ := \
-$(BUILD_DIR)/protocol/packet.o \
-$(BUILD_DIR)/protocol/encoder.o \
-$(BUILD_DIR)/protocol/decoder.o
+	$(BUILD_DIR)/protocol/packet.o \
+	$(BUILD_DIR)/protocol/encoder.o \
+	$(BUILD_DIR)/protocol/decoder.o \
+	$(BUILD_DIR)/protocol/packet_io.o
+
 
 CLIENT_OBJ := \
-$(BUILD_DIR)/client/client.o
+	$(BUILD_DIR)/client/client.o
+
 
 SERVER_OBJ := \
-$(BUILD_DIR)/server/server.o
+	$(BUILD_DIR)/server/server.o
+
+
+CONFIG_OBJ := \
+	$(BUILD_DIR)/config/config.o \
+	$(BUILD_DIR)/config/config_value.o \
+	$(BUILD_DIR)/config/config_loader.o
+
+
+# ==========================================================
+# Application Object Files
+# ==========================================================
+
+CLIENT_APP_OBJ := \
+	$(BUILD_DIR)/apps/client_main.o
+
+
+SERVER_APP_OBJ := \
+	$(BUILD_DIR)/apps/server_main.o
+
+
+# ==========================================================
+# Application Binaries
+# ==========================================================
+
+SERVER_BIN := \
+	$(BIN_DIR)/packetforge_server
+
+
+CLIENT_BIN := \
+	$(BIN_DIR)/packetforge_client
 
 
 # ==========================================================
@@ -77,49 +107,63 @@ $(BUILD_DIR)/server/server.o
 # ==========================================================
 
 TEST_ERROR_OBJ := \
-$(BUILD_DIR)/tests/test_error.o
+	$(BUILD_DIR)/tests/test_error.o
 
 
 TEST_LOGGER_OBJ := \
-$(BUILD_DIR)/tests/test_logger.o
+	$(BUILD_DIR)/tests/test_logger.o
 
 
 TEST_BUFFER_OBJ := \
-$(BUILD_DIR)/tests/test_buffer.o
+	$(BUILD_DIR)/tests/test_buffer.o
 
 
 TEST_ENDIAN_OBJ := \
-$(BUILD_DIR)/tests/test_endian.o
+	$(BUILD_DIR)/tests/test_endian.o
 
 
 TEST_SOCKET_OBJ := \
-$(BUILD_DIR)/tests/test_socket.o
+	$(BUILD_DIR)/tests/test_socket.o
 
 
 TEST_CONNECTION_OBJ := \
-$(BUILD_DIR)/tests/test_connection.o
+	$(BUILD_DIR)/tests/test_connection.o
 
 
 TEST_TRANSPORT_OBJ := \
-$(BUILD_DIR)/tests/test_transport.o
+	$(BUILD_DIR)/tests/test_transport.o
 
 
 TEST_PACKET_OBJ := \
-$(BUILD_DIR)/tests/test_packet.o
+	$(BUILD_DIR)/tests/test_packet.o
 
 
 TEST_ENCODER_OBJ := \
-$(BUILD_DIR)/tests/test_encoder.o
+	$(BUILD_DIR)/tests/test_encoder.o
 
 
 TEST_DECODER_OBJ := \
-$(BUILD_DIR)/tests/test_decoder.o
+	$(BUILD_DIR)/tests/test_decoder.o
+
 
 TEST_CLIENT_OBJ := \
-$(BUILD_DIR)/tests/test_client.o
+	$(BUILD_DIR)/tests/test_client.o
+
 
 TEST_SERVER_OBJ := \
-$(BUILD_DIR)/tests/test_server.o
+	$(BUILD_DIR)/tests/test_server.o
+
+
+TEST_CONFIG_VALUE_OBJ := \
+	$(BUILD_DIR)/tests/test_config_value.o
+
+
+TEST_CONFIG_OBJ := \
+	$(BUILD_DIR)/tests/test_config.o
+
+
+TEST_CONFIG_LOADER_OBJ := \
+	$(BUILD_DIR)/tests/test_config_loader.o
 
 
 # ==========================================================
@@ -127,51 +171,63 @@ $(BUILD_DIR)/tests/test_server.o
 # ==========================================================
 
 TEST_ERROR_BIN := \
-$(BUILD_DIR)/tests/test_error
+	$(BUILD_DIR)/tests/test_error
 
 
 TEST_LOGGER_BIN := \
-$(BUILD_DIR)/tests/test_logger
+	$(BUILD_DIR)/tests/test_logger
 
 
 TEST_BUFFER_BIN := \
-$(BUILD_DIR)/tests/test_buffer
+	$(BUILD_DIR)/tests/test_buffer
 
 
 TEST_ENDIAN_BIN := \
-$(BUILD_DIR)/tests/test_endian
+	$(BUILD_DIR)/tests/test_endian
 
 
 TEST_SOCKET_BIN := \
-$(BUILD_DIR)/tests/test_socket
+	$(BUILD_DIR)/tests/test_socket
 
 
 TEST_CONNECTION_BIN := \
-$(BUILD_DIR)/tests/test_connection
+	$(BUILD_DIR)/tests/test_connection
 
 
 TEST_TRANSPORT_BIN := \
-$(BUILD_DIR)/tests/test_transport
+	$(BUILD_DIR)/tests/test_transport
 
 
 TEST_PACKET_BIN := \
-$(BUILD_DIR)/tests/test_packet
+	$(BUILD_DIR)/tests/test_packet
 
 
 TEST_ENCODER_BIN := \
-$(BUILD_DIR)/tests/test_encoder
+	$(BUILD_DIR)/tests/test_encoder
 
 
 TEST_DECODER_BIN := \
-$(BUILD_DIR)/tests/test_decoder
+	$(BUILD_DIR)/tests/test_decoder
 
 
 TEST_CLIENT_BIN := \
-$(BUILD_DIR)/tests/test_client
+	$(BUILD_DIR)/tests/test_client
 
 
 TEST_SERVER_BIN := \
-$(BUILD_DIR)/tests/test_server
+	$(BUILD_DIR)/tests/test_server
+
+
+TEST_CONFIG_VALUE_BIN := \
+	$(BUILD_DIR)/tests/test_config_value
+
+
+TEST_CONFIG_BIN := \
+	$(BUILD_DIR)/tests/test_config
+
+
+TEST_CONFIG_LOADER_BIN := \
+	$(BUILD_DIR)/tests/test_config_loader
 
 
 # ==========================================================
@@ -179,24 +235,22 @@ $(BUILD_DIR)/tests/test_server
 # ==========================================================
 
 .PHONY: \
-all \
-test \
-clean
-
+	all \
+	apps \
+	test \
+	clean
 
 
 # ==========================================================
 # Default Target
 # ==========================================================
 
-all:
+all: apps
 
-	@echo "PacketForge Build System"
 	@echo
-	@echo "Available commands:"
-	@echo "  make test"
-	@echo "  make clean"
-
+	@echo "========================================="
+	@echo "PacketForge Build Complete"
+	@echo "========================================="
 
 
 # ==========================================================
@@ -208,10 +262,9 @@ $(BUILD_DIR)/common/%.o: $(SRC_DIR)/common/%.cpp
 	mkdir -p $(dir $@)
 
 	$(CXX) \
-	$(CXXFLAGS) \
-	-c $< \
-	-o $@
-
+		$(CXXFLAGS) \
+		-c $< \
+		-o $@
 
 
 # ==========================================================
@@ -223,9 +276,9 @@ $(BUILD_DIR)/network/%.o: $(SRC_DIR)/network/%.cpp
 	mkdir -p $(dir $@)
 
 	$(CXX) \
-	$(CXXFLAGS) \
-	-c $< \
-	-o $@
+		$(CXXFLAGS) \
+		-c $< \
+		-o $@
 
 
 # ==========================================================
@@ -237,9 +290,9 @@ $(BUILD_DIR)/protocol/%.o: $(SRC_DIR)/protocol/%.cpp
 	mkdir -p $(dir $@)
 
 	$(CXX) \
-	$(CXXFLAGS) \
-	-c $< \
-	-o $@
+		$(CXXFLAGS) \
+		-c $< \
+		-o $@
 
 
 # ==========================================================
@@ -251,9 +304,9 @@ $(BUILD_DIR)/client/%.o: $(SRC_DIR)/client/%.cpp
 	mkdir -p $(dir $@)
 
 	$(CXX) \
-	$(CXXFLAGS) \
-	-c $< \
-	-o $@
+		$(CXXFLAGS) \
+		-c $< \
+		-o $@
 
 
 # ==========================================================
@@ -265,9 +318,37 @@ $(BUILD_DIR)/server/%.o: $(SRC_DIR)/server/%.cpp
 	mkdir -p $(dir $@)
 
 	$(CXX) \
-	$(CXXFLAGS) \
-	-c $< \
-	-o $@
+		$(CXXFLAGS) \
+		-c $< \
+		-o $@
+
+
+# ==========================================================
+# Compile Config Sources
+# ==========================================================
+
+$(BUILD_DIR)/config/%.o: $(SRC_DIR)/config/%.cpp
+
+	mkdir -p $(dir $@)
+
+	$(CXX) \
+		$(CXXFLAGS) \
+		-c $< \
+		-o $@
+
+
+# ==========================================================
+# Compile Application Sources
+# ==========================================================
+
+$(BUILD_DIR)/apps/%.o: apps/%.cpp
+
+	mkdir -p $(dir $@)
+
+	$(CXX) \
+		$(CXXFLAGS) \
+		-c $< \
+		-o $@
 
 
 # ==========================================================
@@ -279,10 +360,59 @@ $(BUILD_DIR)/tests/%.o: $(TEST_DIR)/unit/%.cpp
 	mkdir -p $(dir $@)
 
 	$(CXX) \
-	$(CXXFLAGS) \
-	-c $< \
-	-o $@
+		$(CXXFLAGS) \
+		-c $< \
+		-o $@
 
+
+# ==========================================================
+# Link Client Application
+# ==========================================================
+
+$(CLIENT_BIN): \
+	$(CLIENT_APP_OBJ) \
+	$(CLIENT_OBJ) \
+	$(NETWORK_OBJ) \
+	$(PROTOCOL_OBJ) \
+	$(COMMON_OBJ)
+
+	mkdir -p $(dir $@)
+
+	$(CXX) \
+		$^ \
+		-o $@
+
+
+# ==========================================================
+# Link Server Application
+# ==========================================================
+
+$(SERVER_BIN): \
+	$(SERVER_APP_OBJ) \
+	$(SERVER_OBJ) \
+	$(NETWORK_OBJ) \
+	$(PROTOCOL_OBJ) \
+	$(COMMON_OBJ)
+
+	mkdir -p $(dir $@)
+
+	$(CXX) \
+		$^ \
+		-o $@
+
+
+# ==========================================================
+# Build Applications
+# ==========================================================
+
+apps: $(SERVER_BIN) $(CLIENT_BIN)
+
+	@echo
+	@echo "========================================="
+	@echo "PacketForge Applications Built"
+	@echo "========================================="
+	@echo "Server: $(SERVER_BIN)"
+	@echo "Client: $(CLIENT_BIN)"
 
 
 # ==========================================================
@@ -290,16 +420,15 @@ $(BUILD_DIR)/tests/%.o: $(TEST_DIR)/unit/%.cpp
 # ==========================================================
 
 $(TEST_ERROR_BIN): \
-$(BUILD_DIR)/common/error.o \
-$(TEST_ERROR_OBJ)
+	$(BUILD_DIR)/common/error.o \
+	$(TEST_ERROR_OBJ)
 
 	mkdir -p $(dir $@)
 
 	$(CXX) \
-	$^ \
-	$(GTEST_LIBS) \
-	-o $@
-
+		$^ \
+		$(GTEST_LIBS) \
+		-o $@
 
 
 # ==========================================================
@@ -307,16 +436,15 @@ $(TEST_ERROR_OBJ)
 # ==========================================================
 
 $(TEST_LOGGER_BIN): \
-$(BUILD_DIR)/common/logger.o \
-$(TEST_LOGGER_OBJ)
+	$(BUILD_DIR)/common/logger.o \
+	$(TEST_LOGGER_OBJ)
 
 	mkdir -p $(dir $@)
 
 	$(CXX) \
-	$^ \
-	$(GTEST_LIBS) \
-	-o $@
-
+		$^ \
+		$(GTEST_LIBS) \
+		-o $@
 
 
 # ==========================================================
@@ -324,16 +452,15 @@ $(TEST_LOGGER_OBJ)
 # ==========================================================
 
 $(TEST_BUFFER_BIN): \
-$(BUILD_DIR)/common/buffer.o \
-$(TEST_BUFFER_OBJ)
+	$(BUILD_DIR)/common/buffer.o \
+	$(TEST_BUFFER_OBJ)
 
 	mkdir -p $(dir $@)
 
 	$(CXX) \
-	$^ \
-	$(GTEST_LIBS) \
-	-o $@
-
+		$^ \
+		$(GTEST_LIBS) \
+		-o $@
 
 
 # ==========================================================
@@ -341,16 +468,15 @@ $(TEST_BUFFER_OBJ)
 # ==========================================================
 
 $(TEST_ENDIAN_BIN): \
-$(BUILD_DIR)/common/endian.o \
-$(TEST_ENDIAN_OBJ)
+	$(BUILD_DIR)/common/endian.o \
+	$(TEST_ENDIAN_OBJ)
 
 	mkdir -p $(dir $@)
 
 	$(CXX) \
-	$^ \
-	$(GTEST_LIBS) \
-	-o $@
-
+		$^ \
+		$(GTEST_LIBS) \
+		-o $@
 
 
 # ==========================================================
@@ -358,17 +484,16 @@ $(TEST_ENDIAN_OBJ)
 # ==========================================================
 
 $(TEST_SOCKET_BIN): \
-$(BUILD_DIR)/network/socket.o \
-$(BUILD_DIR)/common/error.o \
-$(TEST_SOCKET_OBJ)
+	$(BUILD_DIR)/network/socket.o \
+	$(BUILD_DIR)/common/error.o \
+	$(TEST_SOCKET_OBJ)
 
 	mkdir -p $(dir $@)
 
 	$(CXX) \
-	$^ \
-	$(GTEST_LIBS) \
-	-o $@
-
+		$^ \
+		$(GTEST_LIBS) \
+		-o $@
 
 
 # ==========================================================
@@ -376,17 +501,17 @@ $(TEST_SOCKET_OBJ)
 # ==========================================================
 
 $(TEST_CONNECTION_BIN): \
-$(BUILD_DIR)/network/socket.o \
-$(BUILD_DIR)/network/connection.o \
-$(BUILD_DIR)/common/error.o \
-$(TEST_CONNECTION_OBJ)
+	$(BUILD_DIR)/network/socket.o \
+	$(BUILD_DIR)/network/connection.o \
+	$(BUILD_DIR)/common/error.o \
+	$(TEST_CONNECTION_OBJ)
 
 	mkdir -p $(dir $@)
 
 	$(CXX) \
-	$^ \
-	$(GTEST_LIBS) \
-	-o $@
+		$^ \
+		$(GTEST_LIBS) \
+		-o $@
 
 
 # ==========================================================
@@ -394,18 +519,18 @@ $(TEST_CONNECTION_OBJ)
 # ==========================================================
 
 $(TEST_TRANSPORT_BIN): \
-$(BUILD_DIR)/network/socket.o \
-$(BUILD_DIR)/network/connection.o \
-$(BUILD_DIR)/network/transport.o \
-$(BUILD_DIR)/common/error.o \
-$(TEST_TRANSPORT_OBJ)
+	$(BUILD_DIR)/network/socket.o \
+	$(BUILD_DIR)/network/connection.o \
+	$(BUILD_DIR)/network/transport.o \
+	$(BUILD_DIR)/common/error.o \
+	$(TEST_TRANSPORT_OBJ)
 
 	mkdir -p $(dir $@)
 
 	$(CXX) \
-	$^ \
-	$(GTEST_LIBS) \
-	-o $@
+		$^ \
+		$(GTEST_LIBS) \
+		-o $@
 
 
 # ==========================================================
@@ -413,15 +538,15 @@ $(TEST_TRANSPORT_OBJ)
 # ==========================================================
 
 $(TEST_PACKET_BIN): \
-$(BUILD_DIR)/protocol/packet.o \
-$(TEST_PACKET_OBJ)
+	$(BUILD_DIR)/protocol/packet.o \
+	$(TEST_PACKET_OBJ)
 
 	mkdir -p $(dir $@)
 
 	$(CXX) \
-	$^ \
-	$(GTEST_LIBS) \
-	-o $@
+		$^ \
+		$(GTEST_LIBS) \
+		-o $@
 
 
 # ==========================================================
@@ -429,18 +554,17 @@ $(TEST_PACKET_OBJ)
 # ==========================================================
 
 $(TEST_ENCODER_BIN): \
-$(BUILD_DIR)/protocol/packet.o \
-$(BUILD_DIR)/protocol/encoder.o \
-$(BUILD_DIR)/common/endian.o \
-$(TEST_ENCODER_OBJ)
+	$(BUILD_DIR)/protocol/packet.o \
+	$(BUILD_DIR)/protocol/encoder.o \
+	$(BUILD_DIR)/common/endian.o \
+	$(TEST_ENCODER_OBJ)
 
 	mkdir -p $(dir $@)
 
 	$(CXX) \
-	$^ \
-	$(GTEST_LIBS) \
-	-o $@
-
+		$^ \
+		$(GTEST_LIBS) \
+		-o $@
 
 
 # ==========================================================
@@ -448,19 +572,18 @@ $(TEST_ENCODER_OBJ)
 # ==========================================================
 
 $(TEST_DECODER_BIN): \
-$(BUILD_DIR)/protocol/packet.o \
-$(BUILD_DIR)/protocol/encoder.o \
-$(BUILD_DIR)/protocol/decoder.o \
-$(BUILD_DIR)/common/endian.o \
-$(TEST_DECODER_OBJ)
+	$(BUILD_DIR)/protocol/packet.o \
+	$(BUILD_DIR)/protocol/encoder.o \
+	$(BUILD_DIR)/protocol/decoder.o \
+	$(BUILD_DIR)/common/endian.o \
+	$(TEST_DECODER_OBJ)
 
 	mkdir -p $(dir $@)
 
 	$(CXX) \
-	$^ \
-	$(GTEST_LIBS) \
-	-o $@
-
+		$^ \
+		$(GTEST_LIBS) \
+		-o $@
 
 
 # ==========================================================
@@ -468,24 +591,19 @@ $(TEST_DECODER_OBJ)
 # ==========================================================
 
 $(TEST_CLIENT_BIN): \
-    $(BUILD_DIR)/client/client.o \
-    $(BUILD_DIR)/network/socket.o \
-    $(BUILD_DIR)/network/connection.o \
-    $(BUILD_DIR)/network/transport.o \
-    $(BUILD_DIR)/protocol/packet.o \
-    $(BUILD_DIR)/protocol/encoder.o \
-    $(BUILD_DIR)/protocol/decoder.o \
-    $(BUILD_DIR)/common/endian.o \
-    $(BUILD_DIR)/common/error.o \
-    $(TEST_CLIENT_OBJ)
+	$(CLIENT_OBJ) \
+	$(NETWORK_OBJ) \
+	$(PROTOCOL_OBJ) \
+	$(BUILD_DIR)/common/endian.o \
+	$(BUILD_DIR)/common/error.o \
+	$(TEST_CLIENT_OBJ)
 
 	mkdir -p $(dir $@)
 
 	$(CXX) \
-	    $^ \
-	    $(GTEST_LIBS) \
-	    -o $@
-
+		$^ \
+		$(GTEST_LIBS) \
+		-o $@
 
 
 # ==========================================================
@@ -493,18 +611,69 @@ $(TEST_CLIENT_BIN): \
 # ==========================================================
 
 $(TEST_SERVER_BIN): \
-    $(SERVER_OBJ) \
-    $(BUILD_DIR)/network/socket.o \
-    $(BUILD_DIR)/network/connection.o \
-    $(BUILD_DIR)/common/error.o \
-    $(TEST_SERVER_OBJ)
+	$(SERVER_OBJ) \
+	$(BUILD_DIR)/network/socket.o \
+	$(BUILD_DIR)/network/connection.o \
+	$(BUILD_DIR)/common/error.o \
+	$(TEST_SERVER_OBJ)
 
 	mkdir -p $(dir $@)
 
 	$(CXX) \
-	    $^ \
-	    $(GTEST_LIBS) \
-	    -o $@
+		$^ \
+		$(GTEST_LIBS) \
+		-o $@
+
+
+# ==========================================================
+# Link ConfigValue Test
+# ==========================================================
+
+$(TEST_CONFIG_VALUE_BIN): \
+	$(BUILD_DIR)/config/config_value.o \
+	$(TEST_CONFIG_VALUE_OBJ)
+
+	mkdir -p $(dir $@)
+
+	$(CXX) \
+		$^ \
+		$(GTEST_LIBS) \
+		-o $@
+
+
+# ==========================================================
+# Link Config Test
+# ==========================================================
+
+$(TEST_CONFIG_BIN): \
+	$(BUILD_DIR)/config/config.o \
+	$(BUILD_DIR)/config/config_value.o \
+	$(TEST_CONFIG_OBJ)
+
+	mkdir -p $(dir $@)
+
+	$(CXX) \
+		$^ \
+		$(GTEST_LIBS) \
+		-o $@
+
+
+# ==========================================================
+# Link ConfigLoader Test
+# ==========================================================
+
+$(TEST_CONFIG_LOADER_BIN): \
+	$(BUILD_DIR)/config/config_loader.o \
+	$(BUILD_DIR)/config/config.o \
+	$(BUILD_DIR)/config/config_value.o \
+	$(TEST_CONFIG_LOADER_OBJ)
+
+	mkdir -p $(dir $@)
+
+	$(CXX) \
+		$^ \
+		$(GTEST_LIBS) \
+		-o $@
 
 
 # ==========================================================
@@ -512,25 +681,26 @@ $(TEST_SERVER_BIN): \
 # ==========================================================
 
 test: \
-$(TEST_ERROR_BIN) \
-$(TEST_LOGGER_BIN) \
-$(TEST_BUFFER_BIN) \
-$(TEST_ENDIAN_BIN) \
-$(TEST_SOCKET_BIN) \
-$(TEST_CONNECTION_BIN) \
-$(TEST_TRANSPORT_BIN) \
-$(TEST_PACKET_BIN) \
-$(TEST_ENCODER_BIN) \
-$(TEST_DECODER_BIN) \
-$(TEST_CLIENT_BIN) \
-$(TEST_SERVER_BIN)
-
+	$(TEST_ERROR_BIN) \
+	$(TEST_LOGGER_BIN) \
+	$(TEST_BUFFER_BIN) \
+	$(TEST_ENDIAN_BIN) \
+	$(TEST_SOCKET_BIN) \
+	$(TEST_CONNECTION_BIN) \
+	$(TEST_TRANSPORT_BIN) \
+	$(TEST_PACKET_BIN) \
+	$(TEST_ENCODER_BIN) \
+	$(TEST_DECODER_BIN) \
+	$(TEST_CLIENT_BIN) \
+	$(TEST_SERVER_BIN) \
+	$(TEST_CONFIG_VALUE_BIN) \
+	$(TEST_CONFIG_BIN) \
+	$(TEST_CONFIG_LOADER_BIN)
 
 	@echo
 	@echo "========================================="
 	@echo "Running PacketForge Unit Tests"
 	@echo "========================================="
-
 
 	./$(TEST_ERROR_BIN)
 
@@ -556,6 +726,12 @@ $(TEST_SERVER_BIN)
 
 	./$(TEST_SERVER_BIN)
 
+	./$(TEST_CONFIG_VALUE_BIN)
+
+	./$(TEST_CONFIG_BIN)
+
+	./$(TEST_CONFIG_LOADER_BIN)
+
 
 # ==========================================================
 # Clean Build Artifacts
@@ -566,7 +742,6 @@ clean:
 	rm -rf $(BUILD_DIR)/*
 
 	rm -rf $(BIN_DIR)/*
-
 
 	@echo
 	@echo "Build artifacts removed."

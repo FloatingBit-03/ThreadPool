@@ -3,6 +3,7 @@
 #include "common/error.hpp"
 #include "network/transport.hpp"
 #include "protocol/packet.hpp"
+#include "protocol/packet_io.hpp"
 
 #include <cstdint>
 #include <string>
@@ -19,37 +20,46 @@ public:
     Client();
     ~Client();
 
+
     // Non-copyable
 
     Client(const Client&) = delete;
     Client& operator=(const Client&) = delete;
+
 
     // Movable
 
     Client(Client&& other) noexcept;
     Client& operator=(Client&& other) noexcept;
 
+
     // Connection Management
 
     common::Error connect(
         const std::string& host,
-        std::uint16_t port);
+        std::uint16_t port
+    );
 
     void disconnect() noexcept;
 
     bool isConnected() const noexcept;
 
+
     // Packet Communication
 
     common::Error send(
-        const protocol::Packet& packet);
+        const protocol::Packet& packet
+    );
 
     common::Error receive(
-        protocol::Packet& packet);
+        protocol::Packet& packet
+    );
+
 
 private:
 
     network::Transport transport_;
+    protocol::PacketIO packetIO_;
 };
 
 } // namespace packetforge::client
