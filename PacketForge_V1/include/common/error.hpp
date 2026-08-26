@@ -23,7 +23,9 @@ enum class ErrorCode
 
     SerializationError,
 
-    DeserializationError
+    DeserializationError,
+
+     ProtocolError
 };
 
 

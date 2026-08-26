@@ -58,10 +58,12 @@ NETWORK_OBJ := \
 
 
 PROTOCOL_OBJ := \
-	$(BUILD_DIR)/protocol/packet.o \
-	$(BUILD_DIR)/protocol/encoder.o \
-	$(BUILD_DIR)/protocol/decoder.o \
-	$(BUILD_DIR)/protocol/packet_io.o
+    $(BUILD_DIR)/protocol/packet.o \
+    $(BUILD_DIR)/protocol/encoder.o \
+    $(BUILD_DIR)/protocol/decoder.o \
+    $(BUILD_DIR)/protocol/packet_io.o \
+    $(BUILD_DIR)/protocol/opcode_dispatcher.o \
+    $(BUILD_DIR)/protocol/handler.o
 
 
 CLIENT_OBJ := \

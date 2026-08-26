@@ -5,9 +5,9 @@
 #include "protocol/encoder.hpp"
 
 #include <cstring>
+#include <exception>
 #include <stdexcept>
 #include <vector>
-#include <exception>
 
 namespace packetforge::protocol
 {
@@ -19,6 +19,11 @@ PacketIO::PacketIO(
     transport_(transport)
 {
 }
+
+
+// ==========================================================
+// Send
+// ==========================================================
 
 common::Error
 PacketIO::send(
@@ -32,7 +37,16 @@ PacketIO::send(
         const auto data =
             encoder.encode(packet);
 
-        return transport_.send(data);
+        return transport_.send(
+            data
+        );
+    }
+    catch (const std::invalid_argument& error)
+    {
+        return common::Error(
+            common::ErrorCode::SerializationError,
+            error.what()
+        );
     }
     catch (const std::exception& error)
     {
@@ -43,13 +57,30 @@ PacketIO::send(
     }
 }
 
+
+// ==========================================================
+// Receive
+// ==========================================================
+
 common::Error
 PacketIO::receive(
-    Packet& packet
+    Packet& packet,
+    ProtocolError* protocolError
 )
 {
     // ------------------------------------------------------
-    // Receive fixed-size packet header
+    // Clear previous protocol error
+    // ------------------------------------------------------
+
+    if (protocolError != nullptr)
+    {
+        *protocolError =
+            ProtocolError::InvalidPacket;
+    }
+
+
+    // ------------------------------------------------------
+    // Receive fixed header
     // ------------------------------------------------------
 
     std::vector<std::uint8_t> header;
@@ -65,17 +96,9 @@ PacketIO::receive(
         return error;
     }
 
+
     // ------------------------------------------------------
-    // Extract payload length from header
-    //
-    // Header layout:
-    //
-    // 0-3    Magic Number
-    // 4      Version
-    // 5      Flags
-    // 6-7    Opcode
-    // 8-11   Sequence ID
-    // 12-15  Payload Length
+    // Extract payload length
     // ------------------------------------------------------
 
     std::uint32_t networkPayloadLength{};
@@ -86,10 +109,11 @@ PacketIO::receive(
         sizeof(networkPayloadLength)
     );
 
-    const std::uint32_t payloadLength =
+    const auto payloadLength =
         common::Endian::networkToHost(
             networkPayloadLength
         );
+
 
     // ------------------------------------------------------
     // Receive payload
@@ -111,8 +135,9 @@ PacketIO::receive(
         }
     }
 
+
     // ------------------------------------------------------
-    // Reconstruct complete encoded packet
+    // Reconstruct complete packet
     // ------------------------------------------------------
 
     std::vector<std::uint8_t> data;
@@ -134,22 +159,39 @@ PacketIO::receive(
         payload.end()
     );
 
+
     // ------------------------------------------------------
-    // Decode packet
+    // Decode
     // ------------------------------------------------------
 
     try
     {
         packet =
-            Decoder::decode(data);
+            Decoder::decode(
+                data
+            );
+    }
+    catch (const ProtocolDecodeError& error)
+    {
+        if (protocolError != nullptr)
+        {
+            *protocolError =
+                error.error();
+        }
+
+        return common::Error(
+            common::ErrorCode::ProtocolError,
+            error.what()
+        );
     }
     catch (const std::exception& error)
     {
         return common::Error(
-            common::ErrorCode::UnknownError,
+            common::ErrorCode::DeserializationError,
             error.what()
         );
     }
+
 
     return common::Error(
         common::ErrorCode::Success,

@@ -6,6 +6,7 @@
 #include "protocol/packet.hpp"
 #include "protocol/packet_io.hpp"
 #include "protocol/opcode.hpp"
+#include "protocol/opcode_dispatcher.hpp"
 
 #include <cstdint>
 #include <iostream>
@@ -17,10 +18,6 @@ int main()
 
     constexpr const char* SERVER_ADDRESS = "127.0.0.1";
     constexpr std::uint16_t SERVER_PORT = 9090;
-
-    // ==========================================================
-    // Create Server
-    // ==========================================================
 
     server::Server server;
 
@@ -50,21 +47,16 @@ int main()
         << server.port()
         << '\n';
 
-
-    // ==========================================================
-    // Wait For Client
-    // ==========================================================
-
     std::cout
-        << "waiting for client connection..."
+        << "Waiting for client connection..."
         << std::endl;
-
 
     network::Connection connection;
 
-
     const auto acceptError =
-        server.accept(connection);
+        server.accept(
+            connection
+        );
 
     if (!acceptError.ok())
     {
@@ -78,10 +70,8 @@ int main()
         return 1;
     }
 
-
     std::cout
         << "Client connected successfully\n";
-
 
     std::cout
         << "Connection state: "
@@ -93,10 +83,6 @@ int main()
         << '\n';
 
 
-    // ==========================================================
-    // Create Transport & Packet IO
-    // ==========================================================
-
     network::Transport transport(
         std::move(connection)
     );
@@ -105,18 +91,32 @@ int main()
         transport
     );
 
-    // ==========================================================
-    // Receive Packet
-    // ==========================================================
+    protocol::OpcodeDispatcher dispatcher;
+
+
+    // ======================================================
+    // Receive Request
+    // ======================================================
 
     std::cout
         << "\nWaiting for packet..."
         << std::endl;
 
-    protocol::Packet packet;
+    protocol::Packet request;
+
+    protocol::ProtocolError protocolError =
+        protocol::ProtocolError::InvalidPacket;
 
     const auto receiveError =
-        packetIO.receive(packet);
+        packetIO.receive(
+            request,
+            &protocolError
+        );
+
+
+    // ======================================================
+    // Protocol Error
+    // ======================================================
 
     if (!receiveError.ok())
     {
@@ -125,221 +125,160 @@ int main()
             << receiveError.message()
             << '\n';
 
+
+        if (
+            receiveError.code()
+            ==
+            common::ErrorCode::ProtocolError
+        )
+        {
+            std::cerr
+                << "Protocol error detected\n";
+
+
+            // ------------------------------------------------
+            // Construct protocol error response
+            // ------------------------------------------------
+
+            protocol::Packet response;
+
+            response.setOpcode(
+                static_cast<std::uint16_t>(
+                    protocol::Opcode::ErrorResponse
+                )
+            );
+
+            response.setSequenceId(
+                0
+            );
+
+            response.setPayload(
+                {
+                    static_cast<std::uint8_t>(
+                        protocolError
+                    )
+                }
+            );
+
+
+            // ------------------------------------------------
+            // Send protocol error response
+            // ------------------------------------------------
+
+            const auto sendError =
+                packetIO.send(
+                    response
+                );
+
+            if (!sendError.ok())
+            {
+                std::cerr
+                    << "Failed to send protocol error response: "
+                    << sendError.message()
+                    << '\n';
+            }
+            else
+            {
+                std::cout
+                    << "Protocol error response sent successfully\n";
+            }
+        }
+
+
         transport.connection().disconnect();
         server.stop();
 
         return 1;
     }
 
-    // ==========================================================
-    // Display Packet
-    // ==========================================================
 
     std::cout
-        << "\nPacket received successfully\n";
+        << "Packet received successfully\n";
 
 
-    std::cout
-        << "Magic: 0x"
-        << std::hex
-        << packet.magicNumber()
-        << std::dec
-        << '\n';
-
+    // ======================================================
+    // Dispatch Request
+    // ======================================================
 
     std::cout
-        << "Version: "
-        << static_cast<int>(
-            packet.version()
-        )
-        << '\n';
+        << "\nDispatching request..."
+        << std::endl;
 
+    protocol::Packet response;
 
-    std::cout
-        << "Flags: "
-        << static_cast<int>(
-            packet.flags()
-        )
-        << '\n';
+    const auto dispatchError =
+        dispatcher.dispatch(
+            request,
+            response
+        );
 
-
-    std::cout
-        << "Opcode: "
-        << packet.opcode()
-        << '\n';
-
-
-    std::cout
-        << "Sequence ID: "
-        << packet.sequenceId()
-        << '\n';
-
-
-    std::cout
-        << "Payload length: "
-        << packet.payloadLength()
-        << '\n';
-
-
-    std::cout
-        << "Payload: ";
-
-
-    for (const auto byte : packet.payload())
+    if (!dispatchError.ok())
     {
-        std::cout
-            << static_cast<char>(byte);
+        std::cerr
+            << "Failed to dispatch packet: "
+            << dispatchError.message()
+            << '\n';
+
+        transport.connection().disconnect();
+        server.stop();
+
+        return 1;
     }
 
+    std::cout
+        << "Request dispatched successfully\n";
+
+
+    // ======================================================
+    // Send Response
+    // ======================================================
 
     std::cout
-        << '\n';
+        << "Sending response packet..."
+        << std::endl;
 
-    
-// ==========================================================
-// Create Response Packet
-// ==========================================================
+    const auto sendError =
+        packetIO.send(
+            response
+        );
 
-protocol::Packet response;
-
-response.setVersion(
-    protocol::Packet::VERSION
-);
-
-response.setFlags(0);
-
-response.setOpcode(
-    static_cast<std::uint16_t>(
-        protocol::Opcode::HelloResponse
-    )
-);
-
-response.setSequenceId(
-    packet.sequenceId()
-);
-
-response.setPayload(
+    if (!sendError.ok())
     {
-        'H',
-        'e',
-        'l',
-        'l',
-        'o',
-        ' ',
-        'f',
-        'r',
-        'o',
-        'm',
-        ' ',
-        'P',
-        'a',
-        'c',
-        'k',
-        'e',
-        't',
-        'F',
-        'o',
-        'r',
-        'g',
-        'e',
-        ' ',
-        'S',
-        'e',
-        'r',
-        'v',
-        'e',
-        'r'
+        std::cerr
+            << "Failed to send response packet: "
+            << sendError.message()
+            << '\n';
+
+        transport.connection().disconnect();
+        server.stop();
+
+        return 1;
     }
-);
 
-
-// ==========================================================
-// Send Response Packet
-// ==========================================================
-
-std::cout
-    << "\nSending response packet..."
-    << std::endl;
-
-const auto sendError =
-    packetIO.send(response);
-
-if (!sendError.ok())
-{
-    std::cerr
-        << "Failed to send response packet: "
-        << sendError.message()
-        << '\n';
-
-    transport.connection().disconnect();
-    server.stop();
-
-    return 1;
-}
-
-std::cout
-    << "Response packet sent successfully\n";
-
-std::cout
-    << "  Opcode: "
-    << response.opcode()
-    << '\n';
-
-std::cout
-    << "  Sequence ID: "
-    << response.sequenceId()
-    << '\n';
-
-std::cout
-    << "  Payload length: "
-    << response.payloadLength()
-    << '\n';
-
-std::cout
-    << "  Payload: ";
-
-for (const auto byte : response.payload())
-{
     std::cout
-        << static_cast<char>(byte);
-}
+        << "Response packet sent successfully\n";
 
-std::cout
-    << '\n';
 
-    // ==========================================================
+    // ======================================================
     // Keep Connection Alive
-    // ==========================================================
+    // ======================================================
 
     std::cout
         << "\nPress ENTER to disconnect..."
         << std::flush;
 
-
     std::cin.get();
 
 
-    // ==========================================================
-    // Disconnect
-    // ==========================================================
-
     transport.connection().disconnect();
-
 
     std::cout
         << "\nClient connection closed\n";
 
-
-    // ==========================================================
-    // Stop Server
-    // ==========================================================
-
     server.stop();
-
 
     std::cout
         << "PacketForge server stopped successfully\n";
-
 
     return 0;
 }

@@ -3,53 +3,179 @@
 #include "common/endian.hpp"
 
 #include <cstring>
-#include <stdexcept>
-#include <cstdint>
-#include <vector>
 
 namespace packetforge::protocol
 {
 
-namespace
-{
+// ==========================================================
+// Decode Packet
+// ==========================================================
 
-std::uint16_t readNetworkUint16(
-    const std::vector<std::uint8_t>& data,
-    std::size_t offset)
+Packet
+Decoder::decode(
+    const std::vector<std::uint8_t>& data
+)
 {
-    if (
-        offset + sizeof(std::uint16_t) >
-        data.size())
+    // ------------------------------------------------------
+    // Header size validation
+    // ------------------------------------------------------
+
+    if (data.size() < Packet::HEADER_SIZE)
     {
-        throw std::runtime_error(
-            "Insufficient data for uint16"
+        throw ProtocolDecodeError(
+            ProtocolError::InvalidPacket,
+            "Invalid packet size"
         );
     }
 
-    std::uint16_t value{};
 
-    std::memcpy(
-        &value,
-        data.data() + offset,
-        sizeof(value)
+    // ------------------------------------------------------
+    // Magic number
+    // ------------------------------------------------------
+
+    const auto magic =
+        readUint32(
+            data,
+            0
+        );
+
+    if (magic != Packet::MagicNumber)
+    {
+        throw ProtocolDecodeError(
+            ProtocolError::InvalidPacket,
+            "Invalid magic number"
+        );
+    }
+
+
+    // ------------------------------------------------------
+    // Version
+    // ------------------------------------------------------
+
+    const auto version =
+        data[4];
+
+    if (version != Packet::VERSION)
+    {
+        throw ProtocolDecodeError(
+            ProtocolError::UnsupportedVersion,
+            "Unsupported protocol version"
+        );
+    }
+
+
+    // ------------------------------------------------------
+    // Flags
+    // ------------------------------------------------------
+
+    const auto flags =
+        data[5];
+
+
+    // ------------------------------------------------------
+    // Opcode
+    // ------------------------------------------------------
+
+    const auto opcode =
+        readUint16(
+            data,
+            6
+        );
+
+
+    // ------------------------------------------------------
+    // Sequence ID
+    // ------------------------------------------------------
+
+    const auto sequenceId =
+        readUint32(
+            data,
+            8
+        );
+
+
+    // ------------------------------------------------------
+    // Payload length
+    // ------------------------------------------------------
+
+    const auto payloadLength =
+        readUint32(
+            data,
+            12
+        );
+
+
+    // ------------------------------------------------------
+    // Validate complete packet size
+    // ------------------------------------------------------
+
+    const std::size_t expectedSize =
+        Packet::HEADER_SIZE +
+        static_cast<std::size_t>(payloadLength);
+
+    if (data.size() != expectedSize)
+    {
+        throw ProtocolDecodeError(
+            ProtocolError::InvalidPayload,
+            "Payload size mismatch"
+        );
+    }
+
+
+    // ------------------------------------------------------
+    // Construct Packet
+    // ------------------------------------------------------
+
+    Packet packet;
+
+    packet.setVersion(
+        version
     );
 
-    return common::Endian::networkToHost(value);
-}
+    packet.setFlags(
+        flags
+    );
 
-std::uint32_t readNetworkUint32(
-    const std::vector<std::uint8_t>& data,
-    std::size_t offset)
-{
-    if (
-        offset + sizeof(std::uint32_t) >
-        data.size())
+    packet.setOpcode(
+        opcode
+    );
+
+    packet.setSequenceId(
+        sequenceId
+    );
+
+
+    // ------------------------------------------------------
+    // Extract payload
+    // ------------------------------------------------------
+
+    if (payloadLength > 0)
     {
-        throw std::runtime_error(
-            "Insufficient data for uint32"
+        std::vector<std::uint8_t> payload(
+            data.begin() + Packet::HEADER_SIZE,
+            data.end()
+        );
+
+        packet.setPayload(
+            payload
         );
     }
 
+
+    return packet;
+}
+
+
+// ==========================================================
+// Read uint32
+// ==========================================================
+
+std::uint32_t
+Decoder::readUint32(
+    const std::vector<std::uint8_t>& data,
+    std::size_t offset
+)
+{
     std::uint32_t value{};
 
     std::memcpy(
@@ -58,138 +184,33 @@ std::uint32_t readNetworkUint32(
         sizeof(value)
     );
 
-    return common::Endian::networkToHost(value);
+    return common::Endian::networkToHost(
+        value
+    );
 }
 
-} // anonymous namespace
 
-Packet
-Decoder::decode(
-    const std::vector<std::uint8_t>& data)
+// ==========================================================
+// Read uint16
+// ==========================================================
+
+std::uint16_t
+Decoder::readUint16(
+    const std::vector<std::uint8_t>& data,
+    std::size_t offset
+)
 {
-    /*
-     * Packet header layout:
-     *
-     * Offset  Size   Field
-     * -------------------------
-     * 0       4      Magic Number
-     * 4       1      Version
-     * 5       1      Flags
-     * 6       2      Opcode
-     * 8       4      Sequence ID
-     * 12      4      Payload Length
-     *
-     * Total header = 16 bytes
-     */
+    std::uint16_t value{};
 
-    if (data.size() < Packet::HEADER_SIZE)
-    {
-        throw std::runtime_error(
-            "Invalid packet size"
-        );
-    }
-
-    /*
-     * Decode magic number.
-     */
-
-    const std::uint32_t magic =
-        readNetworkUint32(data, 0);
-
-    if (magic != Packet::MagicNumber)
-    {
-        throw std::runtime_error(
-            "Invalid magic number"
-        );
-    }
-
-    /*
-     * Decode and validate version.
-     */
-
-    const std::uint8_t version = data[4];
-
-    if (version != Packet::VERSION)
-    {
-        throw std::runtime_error(
-            "Unsupported protocol version"
-        );
-    }
-
-    /*
-     * Create Packet after validating
-     * the fixed protocol identifiers.
-     */
-
-    Packet packet;
-
-    packet.setVersion(version);
-
-    /*
-     * Decode flags.
-     */
-
-    packet.setFlags(data[5]);
-
-    /*
-     * Decode opcode.
-     */
-
-    packet.setOpcode(
-        readNetworkUint16(data, 6)
+    std::memcpy(
+        &value,
+        data.data() + offset,
+        sizeof(value)
     );
 
-    /*
-     * Decode sequence ID.
-     */
-
-    packet.setSequenceId(
-        readNetworkUint32(data, 8)
+    return common::Endian::networkToHost(
+        value
     );
-
-    /*
-     * Decode payload length.
-     */
-
-    const std::uint32_t payloadLength =
-        readNetworkUint32(data, 12);
-
-    /*
-     * Validate actual packet size.
-     */
-
-    if (
-        data.size() !=
-        Packet::HEADER_SIZE + payloadLength)
-    {
-        throw std::runtime_error(
-            "Payload size mismatch"
-        );
-    }
-
-    /*
-     * Extract payload.
-     */
-
-    std::vector<std::uint8_t> payload(
-        data.begin() + Packet::HEADER_SIZE,
-        data.end()
-    );
-
-    packet.setPayload(payload);
-
-    /*
-     * Final validation.
-     */
-
-    if (!packet.isValid())
-    {
-        throw std::runtime_error(
-            "Decoded packet is invalid"
-        );
-    }
-
-    return packet;
 }
 
 } // namespace packetforge::protocol

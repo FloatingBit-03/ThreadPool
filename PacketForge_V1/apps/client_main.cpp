@@ -6,6 +6,97 @@
 #include <iostream>
 #include <vector>
 
+namespace
+{
+
+const char* protocolErrorName(
+    packetforge::protocol::ProtocolError error
+)
+{
+    using packetforge::protocol::ProtocolError;
+
+    switch (error)
+    {
+        case ProtocolError::InvalidPacket:
+            return "InvalidPacket";
+
+        case ProtocolError::UnsupportedOpcode:
+            return "UnsupportedOpcode";
+
+        case ProtocolError::UnsupportedVersion:
+            return "UnsupportedVersion";
+
+        case ProtocolError::InvalidPayload:
+            return "InvalidPayload";
+
+        default:
+            return "UnknownProtocolError";
+    }
+}
+
+void printPayload(
+    const packetforge::protocol::Packet& packet
+)
+{
+    using namespace packetforge::protocol;
+
+    if (
+        packet.opcode()
+        ==
+        static_cast<std::uint16_t>(
+            Opcode::ErrorResponse
+        )
+    )
+    {
+        // --------------------------------------------------
+        // ErrorResponse
+        // --------------------------------------------------
+
+        if (packet.payload().empty())
+        {
+            std::cout
+                << "  Error: Missing error code\n";
+
+            return;
+        }
+
+        const auto errorCode =
+            static_cast<ProtocolError>(
+                packet.payload()[0]
+            );
+
+        std::cout
+            << "  Error: "
+            << protocolErrorName(errorCode)
+            << " (code: "
+            << static_cast<int>(
+                packet.payload()[0]
+            )
+            << ")\n";
+
+        return;
+    }
+
+    // ------------------------------------------------------
+    // Normal response payload
+    // ------------------------------------------------------
+
+    std::cout
+        << "  Payload: ";
+
+    for (const auto byte : packet.payload())
+    {
+        std::cout
+            << static_cast<char>(byte);
+    }
+
+    std::cout
+        << '\n';
+}
+
+} // namespace
+
+
 int main()
 {
     packetforge::client::Client client;
@@ -38,9 +129,11 @@ int main()
 
     std::cout
         << "Connection state: "
-        << (client.isConnected()
+        << (
+            client.isConnected()
                 ? "CONNECTED"
-                : "DISCONNECTED")
+                : "DISCONNECTED"
+        )
         << '\n';
 
 
@@ -50,17 +143,24 @@ int main()
 
     packetforge::protocol::Packet packet;
 
-    packet.setVersion(
-        packetforge::protocol::Packet::VERSION
-    );
-
+    // packet.setVersion(
+    //     packetforge::protocol::Packet::VERSION
+    // );
+    
+    packet.setVersion(99);
     packet.setFlags(0);
 
-    packet.setOpcode(
-    static_cast<std::uint16_t>(
-        packetforge::protocol::Opcode::HelloRequest
-        )
-    );
+    // ------------------------------------------------------
+    // TEST CASE:
+    //
+    // Unknown opcode
+    // Expected server response:
+    //
+    // Opcode = ErrorResponse (100)
+    // Error  = UnsupportedOpcode (2)
+    // ------------------------------------------------------
+
+    packet.setOpcode(999);
 
     packet.setSequenceId(1);
 
@@ -92,15 +192,25 @@ int main()
     // Validate packet
     // ------------------------------------------------------
 
-    if (!packet.isValid())
-    {
-        std::cerr
-            << "Packet validation failed\n";
+    // if (!packet.isValid())
+    // {
+    //     std::cerr
+    //         << "Packet validation failed\n";
 
-        client.disconnect();
+    //     client.disconnect();
 
-        return 1;
-    }
+    //     return 1;
+    // }
+
+    // ------------------------------------------------------
+    // Version validation test
+    // ------------------------------------------------------
+
+    std::cout
+        << "Testing unsupported protocol version: "
+        << static_cast<int>(packet.version())
+        << '\n';
+
 
     std::cout
         << "Packet created successfully\n";
@@ -144,7 +254,7 @@ int main()
     }
 
     std::cout
-    << "Packet sent successfully\n";
+        << "Packet sent successfully\n";
 
 
     // ------------------------------------------------------
@@ -210,17 +320,12 @@ int main()
         << response.payloadLength()
         << '\n';
 
-    std::cout
-        << "  Payload: ";
 
-    for (const auto byte : response.payload())
-    {
-        std::cout
-            << static_cast<char>(byte);
-    }
+    // ------------------------------------------------------
+    // Decode response payload
+    // ------------------------------------------------------
 
-    std::cout
-        << '\n';
+    printPayload(response);
 
 
     // ------------------------------------------------------

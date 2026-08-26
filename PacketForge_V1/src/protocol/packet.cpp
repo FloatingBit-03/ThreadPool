@@ -101,11 +101,6 @@ Packet::isValid() const noexcept
         return false;
     }
 
-    if (version_ != VERSION)
-    {
-        return false;
-    }
-
     if (
         payload_.size() >
         std::numeric_limits<std::uint32_t>::max()
@@ -116,5 +111,4 @@ Packet::isValid() const noexcept
 
     return true;
 }
-
 } // namespace packetforge::protocol

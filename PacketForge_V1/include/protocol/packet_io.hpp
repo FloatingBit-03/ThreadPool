@@ -2,6 +2,7 @@
 
 #include "common/error.hpp"
 #include "network/transport.hpp"
+#include "protocol/opcode.hpp"
 #include "protocol/packet.hpp"
 
 namespace packetforge::protocol
@@ -15,13 +16,17 @@ public:
         network::Transport& transport
     );
 
+
     common::Error send(
         const Packet& packet
     );
 
+
     common::Error receive(
-        Packet& packet
+        Packet& packet,
+        ProtocolError* protocolError = nullptr
     );
+
 
 private:
 
