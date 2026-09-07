@@ -93,18 +93,20 @@ Packet::payload() const noexcept
     return payload_;
 }
 
-bool
-Packet::isValid() const noexcept
+bool Packet::isValid() const noexcept
 {
     if (magic_ != MagicNumber)
     {
         return false;
     }
 
-    if (
-        payload_.size() >
-        std::numeric_limits<std::uint32_t>::max()
-    )
+    if (version_ != VERSION)
+    {
+        return false;
+    }
+
+    if (payload_.size() >
+        std::numeric_limits<std::uint32_t>::max())
     {
         return false;
     }
