@@ -225,11 +225,30 @@ int main()
 
         if (!receiveError.ok())
         {
-            std::cerr
-                << "Failed to receive packet: "
-                << receiveError.message()
-                << '\n';
+            /*
+             * ----------------------------------------------------
+             * Expected Peer Disconnect
+             * ----------------------------------------------------
+             * A peer-side TCP close is a normal connection
+             * lifecycle event, not a server failure.
+             */
+            if (
+                receiveError.code()
+                ==
+                common::ErrorCode::ConnectionClosed
+            )
+            {
+                exitCode = 0;
+                break;
+            }
 
+            /*
+             * ----------------------------------------------------
+             * Protocol Error
+             * ----------------------------------------------------
+             * The transport succeeded, but the received packet
+             * failed protocol decoding/validation.
+             */
             if (
                 receiveError.code()
                 ==
@@ -297,7 +316,26 @@ int main()
 
                 std::cout
                     << "Protocol error response sent successfully\n";
+
+                /*
+                 * A protocol error was successfully detected and
+                 * reported to the peer. This is a handled client-
+                 * protocol failure, not a server infrastructure
+                 * failure.
+                 */
+                exitCode = 0;
+                break;
             }
+
+            /*
+             * ----------------------------------------------------
+             * Unexpected Receive Failure
+             * ----------------------------------------------------
+             */
+            std::cerr
+                << "Failed to receive packet: "
+                << receiveError.message()
+                << '\n';
 
             exitCode = 1;
             break;
@@ -306,11 +344,10 @@ int main()
         std::cout
             << "Packet received successfully\n";
 
-        /*
-         * ====================================================
-         * Dispatch Request
-         * ====================================================
-         */
+        std::cout
+            << "Received request opcode: "
+            << request.opcode()
+            << '\n';
 
         std::cout
             << "\nDispatching request..."
@@ -325,10 +362,10 @@ int main()
             );
 
         /*
-         * ====================================================
-         * GAP-001.3 — Shutdown Check After Dispatch
-         * ====================================================
-         */
+        * ====================================================
+        * GAP-001.3 — Shutdown Check After Dispatch
+        * ====================================================
+        */
 
         if (isShutdownRequested())
         {
@@ -345,6 +382,18 @@ int main()
 
             exitCode = 1;
             break;
+        }
+
+        if (
+            response.opcode()
+            ==
+            static_cast<std::uint16_t>(
+                protocol::Opcode::ErrorResponse
+            )
+        )
+        {
+            std::cout
+                << "Dispatcher generated protocol error response\n";
         }
 
         std::cout

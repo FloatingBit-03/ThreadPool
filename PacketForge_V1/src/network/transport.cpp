@@ -174,9 +174,9 @@ Transport::receive(
             data.clear();
 
             return common::Error(
-                common::ErrorCode::SocketError,
-                "Receive failed: connection closed"
-            );
+                common::ErrorCode::ConnectionClosed,
+                "Connection closed by peer"
+);
         }
 
 

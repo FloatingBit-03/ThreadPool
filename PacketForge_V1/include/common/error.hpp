@@ -15,6 +15,8 @@ enum class ErrorCode
 
     ConnectionFailed,
 
+    ConnectionClosed,
+
     SocketError,
 
     Timeout,

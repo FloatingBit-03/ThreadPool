@@ -143,25 +143,32 @@ int main()
 
     packetforge::protocol::Packet packet;
 
-    // packet.setVersion(
-    //     packetforge::protocol::Packet::VERSION
-    // );
+    packet.setVersion(
+        packetforge::protocol::Packet::VERSION
+    );
     
-    packet.setVersion(99);
     packet.setFlags(0);
 
     // ------------------------------------------------------
     // TEST CASE:
+    // Valid protocol version + unsupported request opcode.
     //
-    // Unknown opcode
+    // Opcode 2 = HelloResponse.
+    // HelloResponse is a valid protocol opcode, but it is not
+    // supported as a client request by the server.
+    //
     // Expected server response:
     //
     // Opcode = ErrorResponse (100)
     // Error  = UnsupportedOpcode (2)
     // ------------------------------------------------------
 
-    packet.setOpcode(999);
-
+    packet.setOpcode(
+        static_cast<std::uint16_t>(
+            packetforge::protocol::Opcode::HelloRequest
+        )
+    );
+    
     packet.setSequenceId(1);
 
     const std::vector<std::uint8_t> payload =
@@ -192,23 +199,23 @@ int main()
     // Validate packet
     // ------------------------------------------------------
 
-    // if (!packet.isValid())
-    // {
-    //     std::cerr
-    //         << "Packet validation failed\n";
+    if (!packet.isValid())
+    {
+        std::cerr
+            << "Packet validation failed\n";
 
-    //     client.disconnect();
+        client.disconnect();
 
-    //     return 1;
-    // }
+        return 1;
+    }
 
     // ------------------------------------------------------
-    // Version validation test
+    // Unsupported request opcode test
     // ------------------------------------------------------
 
     std::cout
-        << "Testing unsupported protocol version: "
-        << static_cast<int>(packet.version())
+        << "Testing unsupported request opcode: "
+        << packet.opcode()
         << '\n';
 
 
