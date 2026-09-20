@@ -101,6 +101,16 @@ int main()
 {
     packetforge::client::Client client;
 
+    //test for connection state before connecting to server
+    std::cout
+        << "Initial connection state: "
+        << (
+            client.isConnected()
+                ? "CONNECTED"
+                : "DISCONNECTED"
+        )
+        << '\n';
+
     // ------------------------------------------------------
     // Connect to PacketForge server
     // ------------------------------------------------------
@@ -121,20 +131,17 @@ int main()
             << connectError.message()
             << '\n';
 
+        std::cout
+            << "Connection state after failure: "
+            << (
+                client.isConnected()
+                    ? "CONNECTED"
+                    : "DISCONNECTED"
+            )
+            << '\n';
+
         return 1;
     }
-
-    std::cout
-        << "PacketForge client connected successfully\n";
-
-    std::cout
-        << "Connection state: "
-        << (
-            client.isConnected()
-                ? "CONNECTED"
-                : "DISCONNECTED"
-        )
-        << '\n';
 
 
     // ------------------------------------------------------
@@ -353,6 +360,76 @@ int main()
 
     std::cout
         << "PacketForge client disconnected successfully\n";
+
+    std::cout
+        << "Connection state after disconnect: "
+        << (
+            client.isConnected()
+                ? "CONNECTED"
+                : "DISCONNECTED"
+        )
+        << '\n';
+
+
+    // test for sending packet after disconnecting from server, which should check the stale connection will not be used and return an error.
+    std::cout
+        << "\nTesting send after disconnect...\n";
+
+    const auto sendAfterDisconnectError =
+        client.send(packet);
+
+    std::cout
+        << "Send after disconnect result: "
+        << sendAfterDisconnectError.message()
+        << '\n';
+
+    std::cout
+        << "Connection state after failed send: "
+        << (
+            client.isConnected()
+                ? "CONNECTED"
+                : "DISCONNECTED"
+        )
+        << '\n';
+
+    std::cout
+        << "\nTesting receive after disconnect...\n";
+
+    packetforge::protocol::Packet receiveAfterDisconnectResponse;
+
+    const auto receiveAfterDisconnectError =
+        client.receive(receiveAfterDisconnectResponse);
+
+    std::cout
+        << "Receive after disconnect result: "
+        << receiveAfterDisconnectError.message()
+        << '\n';
+
+    std::cout
+        << "Connection state after failed receive: "
+        << (
+            client.isConnected()
+                ? "CONNECTED"
+                : "DISCONNECTED"
+        )
+        << '\n';
+
+    std::cout
+        << "\nTesting repeated disconnect...\n";
+
+    client.disconnect();
+
+    std::cout
+        << "Second disconnect completed successfully\n";
+
+    std::cout
+        << "Connection state after repeated disconnect: "
+        << (
+            client.isConnected()
+                ? "CONNECTED"
+                : "DISCONNECTED"
+        )
+        << '\n';
 
     return 0;
 }

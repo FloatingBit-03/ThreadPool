@@ -173,10 +173,28 @@ Transport::receive(
         {
             data.clear();
 
+            /*
+             * The peer has closed the TCP connection.
+             * Synchronize the logical connection state with
+             * the transport event before returning the error.
+             */
+            connection_.disconnect();   
+
+            // send after the remote closure 
+            common::Error send(
+                const std::vector<std::uint8_t>& data
+            );
+
+            //received after the remote closure
+            common::Error receive(
+                std::vector<std::uint8_t>& data,
+                std::size_t size
+            );
+
             return common::Error(
                 common::ErrorCode::ConnectionClosed,
                 "Connection closed by peer"
-);
+            );
         }
 
 

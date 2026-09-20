@@ -323,7 +323,7 @@ int main()
                  * protocol failure, not a server infrastructure
                  * failure.
                  */
-                exitCode = 0;
+                exitCode = 1;
                 break;
             }
 
