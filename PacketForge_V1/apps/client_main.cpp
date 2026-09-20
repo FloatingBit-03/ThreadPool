@@ -221,7 +221,7 @@ int main()
     // ------------------------------------------------------
 
     std::cout
-        << "Testing unsupported request opcode: "
+        << "Sending Hello Request opcode: "
         << packet.opcode()
         << '\n';
 
