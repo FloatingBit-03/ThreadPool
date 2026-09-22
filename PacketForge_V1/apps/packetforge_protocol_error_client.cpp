@@ -85,6 +85,76 @@ void writeUint32(
         &networkValue,
         sizeof(networkValue));
 }
+
+bool receiveAll(
+    int socketFd,
+    std::uint8_t* data,
+    std::size_t size)
+{
+    std::size_t totalReceived = 0;
+
+    while (totalReceived < size)
+    {
+        const ssize_t result =
+            ::recv(
+                socketFd,
+                data + totalReceived,
+                size - totalReceived,
+                0);
+
+        if (result < 0)
+        {
+            std::cerr
+                << "recv() failed: "
+                << std::strerror(errno)
+                << '\n';
+
+            return false;
+        }
+
+        if (result == 0)
+        {
+            std::cerr
+                << "Connection closed before complete response was received\n";
+
+            return false;
+        }
+
+        totalReceived +=
+            static_cast<std::size_t>(result);
+    }
+
+    return true;
+}
+
+std::uint16_t readUint16(
+    const std::uint8_t* buffer,
+    std::size_t offset)
+    {
+        std::uint16_t value{};
+
+        std::memcpy(
+            &value,
+            buffer + offset,
+            sizeof(value));
+
+        return ntohs(value);
+    }
+
+std::uint32_t readUint32(
+    const std::uint8_t* buffer,
+    std::size_t offset)
+    {
+        std::uint32_t value{};
+
+        std::memcpy(
+            &value,
+            buffer + offset,
+            sizeof(value));
+
+        return ntohl(value);
+    }
+
 }
 
 int main()
@@ -204,11 +274,127 @@ int main()
 
     // The client only injects the malformed packet.
     // The server owns the protocol-error decision and exit status.
-    ::shutdown(
-        socketFd,
-        SHUT_WR);
+    std::cout
+    << "Waiting for protocol error response...\n";
+
+    /*
+    * --------------------------------------------------------
+    * Receive ErrorResponse header
+    * --------------------------------------------------------
+    */
+
+    std::uint8_t responseHeader[HEADER_SIZE]{};
+
+    if (!receiveAll(
+            socketFd,
+            responseHeader,
+            sizeof(responseHeader)))
+    {
+        ::close(socketFd);
+        return 1;
+    }
+
+    const auto responseMagic =
+        readUint32(
+            responseHeader,
+            0);
+
+    const auto responseVersion =
+        responseHeader[4];
+
+    const auto responseFlags =
+        responseHeader[5];
+
+    const auto responseOpcode =
+        readUint16(
+            responseHeader,
+            6);
+
+    const auto responseSequenceId =
+        readUint32(
+            responseHeader,
+            8);
+
+    const auto responsePayloadLength =
+        readUint32(
+            responseHeader,
+            12);
+
+    std::cout
+        << "\nProtocol error response received\n"
+        << "  Magic: 0x"
+        << std::hex
+        << responseMagic
+        << std::dec
+        << '\n'
+        << "  Version: "
+        << static_cast<int>(responseVersion)
+        << '\n'
+        << "  Flags: "
+        << static_cast<int>(responseFlags)
+        << '\n'
+        << "  Opcode: "
+        << responseOpcode
+        << '\n'
+        << "  Sequence ID: "
+        << responseSequenceId
+        << '\n'
+        << "  Payload length: "
+        << responsePayloadLength
+        << '\n';
+
+    if (responsePayloadLength != 1)
+    {
+        std::cerr
+            << "Unexpected protocol error payload length\n";
+
+        ::close(socketFd);
+        return 1;
+    }
+
+    std::uint8_t responseErrorCode{};
+
+    if (!receiveAll(
+            socketFd,
+            &responseErrorCode,
+            sizeof(responseErrorCode)))
+    {
+        ::close(socketFd);
+        return 1;
+    }
+
+    std::cout
+        << "  Protocol error code: "
+        << static_cast<int>(responseErrorCode)
+        << '\n';
+
+    constexpr std::uint16_t EXPECTED_ERROR_RESPONSE_OPCODE = 100;
+    constexpr std::uint8_t EXPECTED_UNSUPPORTED_VERSION_ERROR = 3;
+
+    const bool passed =
+        responseMagic == MAGIC &&
+        responseVersion == 1 &&
+        responseOpcode == EXPECTED_ERROR_RESPONSE_OPCODE &&
+        responseSequenceId == 0 &&
+        responsePayloadLength == 1 &&
+        responseErrorCode == EXPECTED_UNSUPPORTED_VERSION_ERROR;
+
+    if (passed)
+    {
+        std::cout
+            << "\nGAP-018 unsupported-version test: PASS\n";
+    }
+    else
+    {
+        std::cerr
+            << "\nGAP-018 unsupported-version test: FAIL\n";
+
+        ::close(socketFd);
+        return 1;
+    }
 
     ::close(socketFd);
 
     return 0;
+
 }

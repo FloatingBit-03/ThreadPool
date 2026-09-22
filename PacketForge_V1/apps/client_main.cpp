@@ -101,7 +101,7 @@ int main()
 {
     packetforge::client::Client client;
 
-    //test for connection state before connecting to server
+   // Verify the initial connection state before connecting to the server.
     std::cout
         << "Initial connection state: "
         << (
@@ -143,10 +143,9 @@ int main()
         return 1;
     }
 
-
-    // ------------------------------------------------------
-    // Create PacketForge packet
-    // ------------------------------------------------------
+// ------------------------------------------------------
+// Create HelloRequest packet
+// ------------------------------------------------------
 
     packetforge::protocol::Packet packet;
 
@@ -156,19 +155,17 @@ int main()
     
     packet.setFlags(0);
 
-    // ------------------------------------------------------
-    // TEST CASE:
-    // Valid protocol version + unsupported request opcode.
-    //
-    // Opcode 2 = HelloResponse.
-    // HelloResponse is a valid protocol opcode, but it is not
-    // supported as a client request by the server.
-    //
-    // Expected server response:
-    //
-    // Opcode = ErrorResponse (100)
-    // Error  = UnsupportedOpcode (2)
-    // ------------------------------------------------------
+// ------------------------------------------------------
+// TEST CASE:
+// Valid V1 HelloRequest.
+//
+// Opcode 1 = HelloRequest.
+//
+// Expected server response:
+//
+// Opcode = HelloResponse (2)
+// Sequence ID = request Sequence ID
+// ------------------------------------------------------
 
     packet.setOpcode(
         static_cast<std::uint16_t>(
@@ -202,9 +199,9 @@ int main()
     packet.setPayload(payload);
 
 
-    // ------------------------------------------------------
-    // Validate packet
-    // ------------------------------------------------------
+// ------------------------------------------------------
+// Validate request packet before transmission
+// ------------------------------------------------------
 
     if (!packet.isValid())
     {
@@ -216,9 +213,9 @@ int main()
         return 1;
     }
 
-    // ------------------------------------------------------
-    // Unsupported request opcode test
-    // ------------------------------------------------------
+// ------------------------------------------------------
+// Send HelloRequest
+// ------------------------------------------------------
 
     std::cout
         << "Sending Hello Request opcode: "
@@ -245,9 +242,9 @@ int main()
         << '\n';
 
 
-    // ------------------------------------------------------
-    // Send packet
-    // ------------------------------------------------------
+// ------------------------------------------------------
+// Log HelloRequest details
+// ------------------------------------------------------
 
     std::cout
         << "Sending PacketForge packet...\n";
@@ -342,9 +339,9 @@ int main()
     printPayload(response);
 
 
-    // ------------------------------------------------------
-    // Keep connection alive
-    // ------------------------------------------------------
+// ------------------------------------------------------
+// Wait before disconnecting
+// ------------------------------------------------------
 
     std::cout
         << "Press ENTER to disconnect...\n";
@@ -371,7 +368,10 @@ int main()
         << '\n';
 
 
-    // test for sending packet after disconnecting from server, which should check the stale connection will not be used and return an error.
+// ------------------------------------------------------
+// Verify send() is rejected after local disconnect.
+// A stale connection must not be reused.
+// ------------------------------------------------------
     std::cout
         << "\nTesting send after disconnect...\n";
 
